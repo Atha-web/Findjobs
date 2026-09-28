@@ -8,3 +8,5 @@ data/heartbeat_*.json
 data/heartbeat_*.json.tmp
 data/scheduler_state.json
 data/scheduler_state.json.tmp
+data/llm_health.json
+data/llm_health.json.tmp
