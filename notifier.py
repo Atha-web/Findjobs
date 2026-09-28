@@ -122,3 +122,15 @@ def send_notification(template: str, variables: list, application_id: str | None
 def reply(chat_id: str, text: str, reply_to_message_id: int | None = None) -> dict:
     """Sends a free-form reply (Agent 3's reply_text) - not a template."""
     return telegram_client.send_message(chat_id, text, reply_to_message_id=reply_to_message_id)
+
+
+def notify_text(config: dict, text: str) -> bool:
+    """Best-effort plain message to the candidate (used for scheduler alerts). Never raises."""
+    chat_id = config.get("TELEGRAM_CHAT_ID")
+    if not chat_id or not os.environ.get("TELEGRAM_BOT_TOKEN"):
+        return False
+    try:
+        telegram_client.send_message(chat_id, text)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
