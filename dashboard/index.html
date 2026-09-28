@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Findjobs Live</title>
+<link rel="stylesheet" href="/workspace.css">
 <style>
   :root {
     color-scheme: light;
@@ -212,9 +213,21 @@
 
   <section class="grid main">
     <div class="panel">
-      <h2>How the agents work together</h2>
-      <div class="flowwrap"><svg id="flow" viewBox="0 -44 900 424" role="img" aria-label="Diagram of how the scheduler, agents, tracker, mailer and Telegram connect"></svg></div>
-      <p class="caption">Robots walk to the tracker or mailer when they save or send. Envelopes and notes are messages and emails on their way.</p>
+      <div class="panel-head">
+        <h2>How the agents work</h2>
+        <div class="tabs" role="tablist" aria-label="View">
+          <button class="tab" role="tab" id="tabSpace" aria-selected="true" type="button">Workspace</button>
+          <button class="tab" role="tab" id="tabFlow" aria-selected="false" type="button">Flow diagram</button>
+        </div>
+      </div>
+      <div id="spaceWrap">
+        <div class="flowwrap"><svg id="space" viewBox="-40 0 1040 545" role="img" aria-label="A two-storey office where each agent is a robot at its desk. Robots walk between rooms as they work."></svg></div>
+        <p class="caption">Each robot sits at its own desk. When it saves to the tracker it walks to the records cabinets, and emails travel through the mailroom to the Employer inbox.</p>
+      </div>
+      <div id="flowWrap" hidden>
+        <div class="flowwrap"><svg id="flow" viewBox="0 -44 900 424" role="img" aria-label="Diagram of how the scheduler, agents, tracker, mailer and Telegram connect"></svg></div>
+        <p class="caption">Robots walk to the tracker or mailer when they save or send. Envelopes and notes are messages and emails on their way.</p>
+      </div>
     </div>
     <div class="panel">
       <h2>Live activity</h2>
@@ -242,6 +255,7 @@
   </section>
 </div>
 
+<script src="/workspace.js"></script>
 <script>
 "use strict";
 const AGENT_COLORS = {
@@ -540,7 +554,7 @@ function reactToEvent(ev) {
 // events often arrive in bursts; play them one after another so the motion stays readable
 const visualQueue = [];
 function queueVisual(ev) { visualQueue.push(ev); if (visualQueue.length > 40) visualQueue.splice(0, visualQueue.length - 40); }
-setInterval(() => { const ev = visualQueue.shift(); if (ev) reactToEvent(ev); }, 320);
+setInterval(() => { const ev = visualQueue.shift(); if (ev) { reactToEvent(ev); Workspace.onEvent(ev); } }, 320);
 
 // ---------- rendering
 let latest = null;
@@ -646,6 +660,7 @@ function renderJobs(st) {
 }
 function renderAll(st) {
   renderHeader(st); renderKpis(st); renderAgents(st); renderBoard(st); renderNeeds(st); renderJobs(st);
+  Workspace.onState(st);
 }
 
 // ---------- activity feed
@@ -705,6 +720,20 @@ async function pollEvents() {
 }
 
 // ---------- controls
+function setupViews() {
+  const tabs = { space: $("tabSpace"), flow: $("tabFlow") }, wraps = { space: $("spaceWrap"), flow: $("flowWrap") };
+  let view = "space";
+  try { view = localStorage.getItem("findjobs-view") || "space"; } catch (e) {}
+  const fromLink = new URLSearchParams(location.search).get("view");
+  if (fromLink === "space" || fromLink === "flow") view = fromLink;
+  const show = (v) => {
+    view = v;
+    for (const k of Object.keys(tabs)) { tabs[k].setAttribute("aria-selected", String(k === v)); wraps[k].hidden = k !== v; }
+    try { localStorage.setItem("findjobs-view", v); } catch (e) {}
+  };
+  for (const k of Object.keys(tabs)) tabs[k].addEventListener("click", () => show(k));
+  show(view);
+}
 function setupControls() {
   const sel = $("feedAgent");
   sel.append(el("option", { value: "" }, "all agents"));
@@ -733,7 +762,7 @@ function tick() {
   for (const w of document.querySelectorAll(".when[data-ts]")) w.textContent = ago(w.dataset.ts);
 }
 
-buildFlow(); setupControls(); tick(); setInterval(tick, 1000);
+buildFlow(); Workspace.init($("space")); setupViews(); setupControls(); tick(); setInterval(tick, 1000);
 pollState(); pollEvents();
 </script>
 </body>
