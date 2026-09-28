@@ -1,6 +1,6 @@
 # Job Application Agent System: Build Guide
 
-Prompts and specs for a three-agent job application system with a shared tracker and WhatsApp updates.
+Prompts and specs for a three-agent job application system with a shared tracker and Telegram updates.
 
 ## Files
 
@@ -9,7 +9,7 @@ Prompts and specs for a three-agent job application system with a shared tracker
 | `00_shared_rules.md` | Rules every agent follows. Goes at the top of every agent's system prompt. |
 | `01_research_agent.md` | Agent 1: finds, checks and scores jobs. Never applies. |
 | `02_application_agent.md` | Agent 2: prepares and submits applications, writes emails and follow-ups. |
-| `03_tracking_agent.md` | Agent 3: reads your WhatsApp replies and classifies recruiter emails. |
+| `03_tracking_agent.md` | Agent 3: reads your Telegram replies and classifies recruiter emails. |
 | `04_candidate_profile_template.md` | Your facts, preferences and standard answers. Fill in once. |
 
 ## Assembling each agent
@@ -29,14 +29,14 @@ Anything in `{{DOUBLE_BRACES}}` is a placeholder for you to fill in.
 
 ```
 Scheduler (daily)         -> Agent 1 -> tracker: Discovered
-Notifier (code)           -> WhatsApp: approval_request
+Notifier (code)           -> Telegram: approval_request
 You reply "1"             -> Agent 3 -> tracker: Ready to Apply
 Apply queue (code)        -> Agent 2 -> tracker: Applied, or Application Started + manual pack
-Notifier (code)           -> WhatsApp: application_submitted / manual_submit
-New email in inbox        -> Agent 3 (email mode) -> tracker update -> WhatsApp: status_changed
-Your WhatsApp message     -> Agent 3 (message mode) -> tracker update -> reply
+Notifier (code)           -> Telegram: application_submitted / manual_submit
+New email in inbox        -> Agent 3 (email mode) -> tracker update -> Telegram: status_changed
+Your Telegram message     -> Agent 3 (message mode) -> tracker update -> reply
 Scheduler (daily)         -> follow-up check -> Agent 2 drafts -> you approve -> sent
-Scheduler (daily/weekly)  -> summary from tracker counts -> WhatsApp
+Scheduler (daily/weekly)  -> summary from tracker counts -> Telegram
 ```
 
 The agents never talk to each other directly. They read and write the tracker, and code moves work between them based on status.
@@ -45,9 +45,15 @@ The agents never talk to each other directly. They read and write the tracker, a
 
 Use the LLM for judgment and language: planning searches, extracting job details, scoring, writing, understanding your replies and classifying emails.
 
-Use plain code for everything mechanical: generating Application IDs, duplicate lookups, rate limits, the mode switch, sending WhatsApp templates, scheduling, summary counts and the history log.
+Use plain code for everything mechanical: generating Application IDs, duplicate lookups, rate limits, the mode switch, sending Telegram notifications, scheduling, summary counts and the history log.
 
-Enforce the hard limits in code as well as in the prompts: daily caps, MODE, PAUSED, the allowed WhatsApp number, and never deleting records. The prompts tell the agents the rules; code makes sure the rules hold even when a model gets something wrong.
+Enforce the hard limits in code as well as in the prompts: daily caps, MODE, PAUSED, the allowed Telegram chat ID, and never deleting records. The prompts tell the agents the rules; code makes sure the rules hold even when a model gets something wrong.
+
+What the code enforces today:
+- **Tracker (`tracker.py`):** no deletes, no backward status moves, no duplicate fingerprints, `MAX_NEW_MATCHES_PER_DAY`, `MATCH_THRESHOLD_RECOMMEND`, `MAX_POSTING_AGE_DAYS`, `MAX_APPLICATIONS_PER_DAY`, `MAX_APPS_PER_COMPANY_30_DAYS` and `MAX_FOLLOW_UPS`. A file lock stops the poller and scheduled runs overwriting each other.
+- **Sending (`tools.py`):** every email needs your `send <id>`. Code also checks `PAUSED`, `MAX_EMAILS_PER_DAY` (in your timezone), the application caps, that the application isn't already sent, and that the recipient matches the recruiter email on file.
+- **Settings (`poll_telegram.py`):** the model can pause the system or switch to APPROVAL, but only you typing `CONFIRM AUTO` or `CONFIRM RESUME` can switch to AUTO or resume.
+- **Left to the agents:** `EXPERIENCE_GAP_MAX_YEARS` and `MAX_FORM_PAGES`, because there is no structured field to check them against.
 
 ## Tools to implement
 
@@ -68,12 +74,15 @@ Agent 3 has only the tracker tools. It returns replies and notifications as outp
 ## Config
 
 ```
-MODE=APPROVAL                    # APPROVAL or AUTO. Only you can switch, by WhatsApp, with confirmation.
+MODE=APPROVAL                    # APPROVAL or AUTO. Only you can switch, by Telegram, with confirmation.
 PAUSED=false
-TIMEZONE={{IANA timezone name}}
-USER_WHATSAPP_NUMBER={{+country code and number}}
+TIMEZONE={{IANA timezone name}}  # e.g. Asia/Colombo
 
-MATCH_THRESHOLD_RECOMMEND=65     # below this: Skipped
+NOTIFY_CHANNEL=telegram
+TELEGRAM_CHAT_ID={{your chat ID}}   # only this chat is accepted. See "Telegram setup".
+                                    # The bot token is NOT stored here: set TELEGRAM_BOT_TOKEN as an env var.
+
+MATCH_THRESHOLD_RECOMMEND=55     # below this: Skipped
 MATCH_THRESHOLD_AUTO=80          # AUTO mode applies only at or above this
 MAX_POSTING_AGE_DAYS=30
 EXPERIENCE_GAP_MAX_YEARS=2
@@ -88,8 +97,14 @@ FOLLOW_UP_AFTER_BUSINESS_DAYS=10
 MAX_FOLLOW_UPS=1
 NO_RESPONSE_AFTER_DAYS=30
 
+DAILY_SEARCH_TIME=08:00
+APPLY_QUEUE_EVERY_MINUTES=30
+FOLLOW_UP_CHECK_TIME=10:00       # also when "No Response" is checked
 DAILY_SUMMARY_TIME=19:00
-WEEKLY_SUMMARY_DAY=Sunday
+WEEKLY_SUMMARY_DAY=Sunday        # this day's summary covers the week and replaces the daily one
+
+EMAIL_SENDING_ENABLED=true       # sends only after you reply "send <id>"
+BROWSER_FILL_ENABLED=false
 ```
 
 These numbers are starting points. Adjust them after the first couple of weeks.
@@ -106,87 +121,145 @@ These numbers are starting points. Adjust them after the first couple of weeks.
 
 **Summaries.** Build them from tracker counts. Include only rejection reasons that were recorded from employer emails.
 
-## WhatsApp setup
+## Running it
 
-You need the WhatsApp Business Platform (Meta's Cloud API directly, or through a provider such as Twilio) and a phone number that isn't your personal WhatsApp. Your personal number is the recipient.
+Double-click or run `start_agents.ps1`. It opens two windows:
 
-Messages the system sends first (approvals, confirmations, summaries) must use pre-approved message templates. Free-form replies are allowed within 24 hours of your last message. Submit the templates below for approval early, since review can take time.
+- **Findjobs: Telegram** runs `poll_telegram.py`, which answers your messages.
+- **Findjobs: Scheduler** runs `scheduler.py`, which does the daily jobs.
 
-Your replies arrive by webhook, including the ID of any message you quoted. Store `message_id -> application_id` for every notification sent. That mapping is what lets a one-word reply like "rejected" resolve to the right application.
+Both must stay open. They load your saved environment variables themselves.
 
-Accept messages only from USER_WHATSAPP_NUMBER, and drop everything else in code.
+The scheduler uses the times in `config.json` and its `TIMEZONE`. If the computer was off at a job's time, the job runs when the scheduler next starts that day. A failed job retries every 30 minutes, up to 3 times a day, then messages you. `PAUSED` stops the search, apply and follow-up jobs.
 
-If you aren't attached to WhatsApp, a Telegram bot has none of the template or number requirements and is much quicker to set up.
+```
+python scheduler.py --status           # when each job last ran and whether it is due
+python scheduler.py --run daily_search # run one job now
+python scheduler.py --once             # run whatever is due, then exit
+```
 
-### Templates
+Jobs: `daily_search`, `apply_queue`, `follow_up_check`, `no_response`, `daily_summary`, `weekly_summary`.
 
-Meta reviews every template and commonly rejects ones that start or end with a variable, so each of these ends with fixed text.
+### Commands you can type in Telegram
+
+| You type | What happens |
+|---|---|
+| `send <id>` | Sends a staged email (application, follow-up or withdrawal). Handled in code, no LLM. |
+| `discard <id>` | Throws away a staged email. Nothing is sent, and the draft is kept in `data/outbox/discarded`. |
+| `CONFIRM AUTO` | Switches to AUTO mode. Only you typing this can do it. |
+| `CONFIRM RESUME` | Resumes after a pause. |
+| Anything else | Agent 3 works out what you mean, such as `pending`, `rejected` or `interview Friday`. Reply to a notification to point at that application. |
+
+### How follow-ups work
+
+1. `follow_up_check` finds Applied records older than `FOLLOW_UP_AFTER_BUSINESS_DAYS` that have a **verified** recruiter email and fewer than `MAX_FOLLOW_UPS` follow-ups.
+2. It flags them `follow_up_due` and runs Agent 2 with task `follow_up`. Agent 2 writes a short draft, and you get it on Telegram.
+3. Reply `send <id>` to send it, or `discard <id>` to drop it. If you ignore it, no second draft is made.
+4. After sending, `follow_ups_sent` goes up by one and the flag clears. Code refuses a send that would go over `MAX_FOLLOW_UPS`.
+
+Withdrawal drafts work the same way, and sending one marks the application Withdrawn.
+
+## Telegram setup
+
+Notifications and your replies go through a Telegram bot, using Telegram's official Bot API. There are no message templates to get approved, no 24-hour reply window, and no separate business number.
+
+1. In Telegram, message **@BotFather**, send `/newbot`, and follow the prompts. Copy the bot token.
+2. Set the token as an environment variable. It is never stored in a file:
+   ```
+   $env:TELEGRAM_BOT_TOKEN = "123456:ABC-..."
+   ```
+3. Open a chat with your new bot and send it any message, such as "hi".
+4. Run `python poll_telegram.py`. With no `TELEGRAM_CHAT_ID` set, it prints your chat ID and exits.
+5. Put that ID in `config.json` as `TELEGRAM_CHAT_ID`, then run `python poll_telegram.py` again. It now listens for your messages and passes each one to Agent 3 in message mode.
+
+The agents also need an LLM key. A free one works: create a Gemini API key at https://aistudio.google.com/apikey (no card needed) and set it as `LLM_API_KEY`. That uses Gemini through its OpenAI-compatible endpoint. To use another OpenAI-compatible provider, such as Groq, also set `LLM_BASE_URL` and `LLM_MODEL`. `ANTHROPIC_API_KEY` still works if `LLM_API_KEY` isn't set.
+
+**How replies resolve.** Every notification sent is logged as `message_id -> application_id` in `data/notifications.json`. When you use Telegram's **Reply** on a notification, the quoted `message_id` tells Agent 3 which application you mean, so a one-word reply like "rejected" or "1" resolves correctly.
+
+**Security.** Only messages from `TELEGRAM_CHAT_ID` are processed. Anything from another chat is logged and dropped in code.
+
+**Sending emails.** `send <id>` is handled directly in code, with no LLM involved. It dispatches the drafted email over SMTP and marks the application Applied.
+
+### Notification formats
+
+`notifier.py` renders these as plain text and logs each one. The variable order is fixed in code.
 
 **approval_request**
 ```
-New match 🔎 Score {{1}}/100
-Role: {{2}}
-Company: {{3}}
-Location: {{4}}
-Salary: {{5}}
-Why: {{6}}
-Gaps: {{7}}
-ID: {{8}}
+New match 🔎 Score {1}/100
+Role: {2}
+Company: {3}
+Location: {4}
+Salary: {5}
+Why: {6}
+Gaps: {7}
+ID: {8}
 Reply 1 to apply, 2 to skip, 3 for details.
 ```
 
 **application_submitted**
 ```
 Application submitted ✅
-Role: {{1}}
-Company: {{2}}
-Method: {{3}}
-Date: {{4}}
-ID: {{5}}
+Role: {1}
+Company: {2}
+Method: {3}
+Date: {4}
+ID: {5}
 Reply to this message with any update, like "rejected" or "interview Friday".
 ```
 
 **manual_submit**
 ```
 Ready for you to submit 📝
-Role: {{1}}
-Company: {{2}}
-Apply here: {{3}}
-Answers and cover letter: {{4}}
+Role: {1}
+Company: {2}
+Apply here: {3}
+Answers and cover letter: {4}
 Reply "done" once you've submitted.
 ```
 
 **status_changed**
 ```
 Application update 📩
-{{1}} at {{2}}
-New status: {{3}}
-Reason: {{4}}
+{1} at {2}
+New status: {3}
+Reason: {4}
 Reply if this is wrong.
 ```
 
 **action_required**
 ```
 Action needed ⚠️
-{{1}} at {{2}}
-{{3}}
-ID: {{4}}
+{1} at {2}
+{3}
+ID: {4}
 Reply here to answer.
+```
+
+**email_ready**
+```
+Email drafted ✉️ - ready to send
+To: {1}
+Subject: {2}
+
+{3}
+
+Reply "send {4}" to send it as-is, or tell me what to change first.
 ```
 
 **daily_summary**
 ```
-Job summary for {{1}}
-Today: {{2}} found, {{3}} applied, {{4}} waiting for you, {{5}} skipped
-Pipeline: {{6}} applied, {{7}} interviews, {{8}} assessments, {{9}} offers
-Needs you: {{10}}
+Job summary for {1}
+Today: {2} found, {3} applied, {4} waiting for you, {5} skipped
+Pipeline: {6} applied, {7} interviews, {8} assessments, {9} offers
+Needs you: {10}
 Reply "pending" to see what's waiting.
 ```
 
 ## Build order
 
 1. **Tracker, profile, Agent 1, and Agent 2 with manual packs only.** Nothing is submitted automatically. Review every score and every draft for one to two weeks, and tune the profile and thresholds. This stage alone delivers most of the value.
-2. **WhatsApp.** Approval requests, confirmations, and Agent 3 message mode.
+2. **Telegram.** Approval requests, confirmations, and Agent 3 message mode.
 3. **Email.** Agent 3 email mode, then automatic sending of email applications (still with approval).
 4. **Optional.** Browser form-filling for simple forms, then AUTO mode.
 
