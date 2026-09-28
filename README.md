@@ -145,7 +145,7 @@ Jobs: `daily_search`, `apply_queue`, `follow_up_check`, `no_response`, `daily_su
 
 `python dashboard.py` (or the third window from `start_agents.ps1`) shows what the agents are doing as it happens:
 
-- an animated diagram of how the scheduler, agents, tracker, mailer and Telegram connect, where nodes glow and links pulse as things happen
+- an animated diagram of how the scheduler, agents, tracker, mailer and Telegram connect. Each agent is a small robot: it types while working, shakes on an error, and sleeps when its process is offline. When it saves to the tracker or stages an email it walks along the arrows to that station and back, while envelopes and notes travel between stations and speech bubbles say what it is doing
 - a live activity feed (every model round, tool call, job, message and email), which you can filter by agent
 - one card per agent: working, idle or error, what it is doing now, and whether the Telegram listener and scheduler are online
 - the application pipeline by stage, what needs you, and when each job runs next
