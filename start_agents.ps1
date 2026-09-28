@@ -1,4 +1,4 @@
-# Starts the Telegram listener and the scheduler, each in its own window.
+# Starts the Telegram listener, the scheduler and the live dashboard, each in its own window.
 # Loads your saved (setx) variables first, so it works even from an old terminal.
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $loadEnv = @"
@@ -9,3 +9,4 @@ Set-Location '$here'
 "@
 Start-Process powershell -ArgumentList '-NoExit','-Command',($loadEnv + "`n`$Host.UI.RawUI.WindowTitle='Findjobs: Telegram'; python poll_telegram.py")
 Start-Process powershell -ArgumentList '-NoExit','-Command',($loadEnv + "`n`$Host.UI.RawUI.WindowTitle='Findjobs: Scheduler'; python scheduler.py")
+Start-Process powershell -ArgumentList '-NoExit','-Command',($loadEnv + "`n`$Host.UI.RawUI.WindowTitle='Findjobs: Dashboard'; python dashboard.py --open")
