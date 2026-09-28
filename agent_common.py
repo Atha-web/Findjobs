@@ -26,6 +26,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import events
+import filelock
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LLM_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
@@ -168,6 +169,35 @@ READ_TIMEOUT = 90          # a single model call that has produced nothing for t
 CALL_BUDGET_SECONDS = 300  # ...and one logical call (all its retries and fallbacks) never takes longer than this
 
 
+BAD_MODEL_SECONDS = 600    # after a model fails every retry, skip it for this long
+_HEALTH_PATH = os.path.join(_DIR, "data", "llm_health.json")
+
+
+def _load_bad_models() -> dict:
+    """{model: epoch seconds until which it is skipped}. Shared by every agent process."""
+    try:
+        with open(_HEALTH_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    now = time.time()
+    return {m: until for m, until in data.items() if isinstance(until, (int, float)) and until > now}
+
+
+def _mark_model_bad(model: str) -> None:
+    try:
+        with filelock.locked("llm_health"):
+            bad = _load_bad_models()
+            bad[model] = time.time() + BAD_MODEL_SECONDS
+            os.makedirs(os.path.dirname(_HEALTH_PATH), exist_ok=True)
+            tmp = _HEALTH_PATH + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(bad, f)
+            os.replace(tmp, _HEALTH_PATH)
+    except Exception:  # noqa: BLE001 - remembering a failure must never break a call
+        pass
+
+
 def _chat_completion(payload: dict) -> dict:
     """
     POSTs to /chat/completions. Server overload or rate limits, and calls that hang or drop the
@@ -179,6 +209,9 @@ def _chat_completion(payload: dict) -> dict:
     headers = {"Authorization": f"Bearer {require_api_key()}"}
     fallbacks = os.environ.get("LLM_FALLBACK_MODELS", DEFAULT_FALLBACK_MODELS)
     models = [payload["model"]] + [m.strip() for m in fallbacks.split(",") if m.strip()]
+    bad = _load_bad_models()
+    healthy = [m for m in models if m not in bad]
+    models = healthy + [m for m in models if m in bad]  # models that just failed go last, not away
     deadline = time.monotonic() + CALL_BUDGET_SECONDS
     last_error = "no models tried"
     for model in models:
@@ -193,6 +226,7 @@ def _chat_completion(payload: dict) -> dict:
                 if attempt < 1:            # one quick retry, then try the next model
                     time.sleep(3)
                     continue
+                _mark_model_bad(model)
                 break
             if resp.ok:
                 return resp.json()
@@ -201,6 +235,7 @@ def _chat_completion(payload: dict) -> dict:
                 if attempt < 2:
                     time.sleep(5 * 2 ** attempt)
                     continue
+                _mark_model_bad(model)
                 break  # still overloaded: try the next model
             if resp.status_code == 404:
                 break  # model unavailable to this key: try the next one
