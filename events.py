@@ -31,6 +31,17 @@ KEEP_LINES = 2000
 AGENTS = ("scheduler", "agent1", "agent2", "agent3", "poller", "notifier", "mailer")
 
 
+_last_id = 0
+
+
+def _next_id() -> int:
+    """Microseconds since the epoch: unique enough, increasing, and small enough that a
+    browser can hold it exactly (nanoseconds would lose precision in JavaScript)."""
+    global _last_id
+    _last_id = max(time.time_ns() // 1000, _last_id + 1)
+    return _last_id
+
+
 def new_run_id() -> str:
     return uuid.uuid4().hex[:8]
 
@@ -43,7 +54,7 @@ def emit(agent: str, type_: str, summary: str, application_id: str | None = None
     """
     try:
         entry = {
-            "id": time.time_ns(),
+            "id": _next_id(),
             "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
             "agent": agent,
             "type": type_,
