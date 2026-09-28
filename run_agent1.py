@@ -12,7 +12,7 @@ Usage:
     python run_agent1.py [--new-listings path/to/listings.json]
 
 Requires:
-    pip install anthropic requests
+    pip install requests   (plus `anthropic` only if using the Anthropic backend)
     set ANTHROPIC_API_KEY=sk-ant-...
 """
 
@@ -63,6 +63,8 @@ TOOLS = [
 
 def make_dispatch(config: dict, today_date: str):
     def dispatch(name: str, tool_input: dict) -> dict:
+        if name == "web_search":  # only reached on non-Anthropic backends
+            return tools.web_search(tool_input["query"])
         if name == "fetch_page":
             return tools.fetch_page(tool_input["url"])
         if name == "tracker_search":
@@ -109,7 +111,7 @@ def main() -> None:
         tools=TOOLS,
         user_content="\n\n".join(user_parts),
         dispatch=make_dispatch(config, today_date),
-        label_fn=lambda inp: inp.get("url") or (inp.get("record") or {}).get("company") or inp.get("filters") or "",
+        label_fn=lambda inp: inp.get("url") or inp.get("query") or (inp.get("record") or {}).get("company") or inp.get("filters") or "",
     )
 
     print("\n----- Agent 1 output -----\n")

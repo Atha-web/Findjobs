@@ -19,7 +19,7 @@ Usage:
     python run_agent2.py --application-id APP-0001 --task withdraw
 
 Requires:
-    pip install anthropic requests
+    pip install requests   (plus `anthropic` only if using the Anthropic backend)
     set ANTHROPIC_API_KEY=sk-ant-...
 """
 
@@ -74,8 +74,9 @@ TOOLS = [
     },
     {
         "name": "email_draft",
-        "description": "Save an email draft (follow-up, withdrawal, or a paused application "
-                        "question). Never sends anything.",
+        "description": "Stage an email draft (follow-up, withdrawal, or a paused application "
+                        "question) and ask the candidate to approve it on Telegram. Never sends "
+                        "anything itself.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -90,8 +91,9 @@ TOOLS = [
     },
     {
         "name": "email_send",
-        "description": "Send an application email. Currently gated off (EMAIL_SENDING_ENABLED "
-                        "is false) - it will save the email instead of delivering it and say so.",
+        "description": "Stage an application email for sending. It is NOT sent yet: the "
+                        "candidate is notified on Telegram and must reply \"send <id>\" first. "
+                        "Report it as awaiting the candidate's confirmation.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -107,7 +109,7 @@ TOOLS = [
 ]
 
 
-def make_dispatch(config: dict, application_id: str):
+def make_dispatch(config: dict, application_id: str, task: str = "apply"):
     def dispatch(name: str, tool_input: dict) -> dict:
         if name == "tracker_get":
             try:
@@ -124,7 +126,8 @@ def make_dispatch(config: dict, application_id: str):
         if name == "get_resume":
             return tools.get_resume(tool_input["version"])
         if name == "email_draft":
-            return tools.email_draft(config=config, application_id=application_id, **tool_input)
+            kind = task if task in ("follow_up", "withdraw") else "draft"
+            return tools.email_draft(config=config, application_id=application_id, kind=kind, **tool_input)
         if name == "email_send":
             return tools.email_send(config=config, application_id=application_id, **tool_input)
         raise ValueError(f"Unknown tool: {name}")
@@ -163,14 +166,14 @@ def main() -> None:
 
     print(f"Running Agent 2 (model={common.MODEL}, application_id={args.application_id}, "
           f"task={args.task})...")
-    print("NOTE: email_send is gated off and there is no browser_fill, so nothing will "
-          "actually be submitted or delivered by this run.")
+    print("NOTE: emails are only staged (you confirm with 'send <id>' on Telegram) and there "
+          "is no browser_fill, so nothing is submitted or delivered by this run itself.")
 
     final_text = common.run_tool_loop(
         system_prompt=system_prompt,
         tools=TOOLS,
         user_content=user_content,
-        dispatch=make_dispatch(config, args.application_id),
+        dispatch=make_dispatch(config, args.application_id, args.task),
         label_fn=lambda inp: inp.get("application_id") or inp.get("to") or inp.get("version") or "",
     )
 
