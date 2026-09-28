@@ -258,6 +258,9 @@
 <script src="/workspace.js"></script>
 <script>
 "use strict";
+// If the workspace script did not load (for example a server started before it existed), the
+// rest of the dashboard still works and the Workspace tab explains what to do.
+const WS = window.Workspace || { missing: true, init() {}, onState() {}, onEvent() {} };
 const AGENT_COLORS = {
   agent1: "var(--c-agent1)", agent2: "var(--c-agent2)", agent3: "var(--c-agent3)",
   scheduler: "var(--c-scheduler)", poller: "var(--c-poller)", notifier: "var(--c-notifier)", mailer: "var(--c-mailer)",
@@ -554,7 +557,7 @@ function reactToEvent(ev) {
 // events often arrive in bursts; play them one after another so the motion stays readable
 const visualQueue = [];
 function queueVisual(ev) { visualQueue.push(ev); if (visualQueue.length > 40) visualQueue.splice(0, visualQueue.length - 40); }
-setInterval(() => { const ev = visualQueue.shift(); if (ev) { reactToEvent(ev); Workspace.onEvent(ev); } }, 320);
+setInterval(() => { const ev = visualQueue.shift(); if (ev) { reactToEvent(ev); WS.onEvent(ev); } }, 320);
 
 // ---------- rendering
 let latest = null;
@@ -660,7 +663,7 @@ function renderJobs(st) {
 }
 function renderAll(st) {
   renderHeader(st); renderKpis(st); renderAgents(st); renderBoard(st); renderNeeds(st); renderJobs(st);
-  Workspace.onState(st);
+  WS.onState(st);
 }
 
 // ---------- activity feed
@@ -762,7 +765,12 @@ function tick() {
   for (const w of document.querySelectorAll(".when[data-ts]")) w.textContent = ago(w.dataset.ts);
 }
 
-buildFlow(); Workspace.init($("space")); setupViews(); setupControls(); tick(); setInterval(tick, 1000);
+buildFlow(); WS.init($("space")); setupViews();
+if (WS.missing) {
+  $("kpis").before(el("div", { class: "banner", style: "border-color:var(--warning)" },
+    "▲ The Workspace scene could not load (workspace.js was not found). Stop and restart dashboard.py, then refresh this page. The flow diagram below works meanwhile."));
+  document.getElementById("tabFlow").click();
+} setupControls(); tick(); setInterval(tick, 1000);
 pollState(); pollEvents();
 </script>
 </body>
