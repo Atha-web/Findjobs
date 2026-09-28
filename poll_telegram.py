@@ -30,6 +30,7 @@ import time
 import requests
 
 import agent_common as common
+import events
 import notifications
 import notifier
 import run_agent3
@@ -209,6 +210,10 @@ def _handle_message(update: dict, config: dict) -> dict:
     text = message.get("text", "")
     message_id = message["message_id"]
 
+    is_command = text.strip().lower().split(" ")[0] in ("send", "discard", "confirm")
+    events.emit("poller", "message_in",
+                f"You sent: {' '.join(text.split())[:40]}" if is_command else f"You sent a message ({len(text)} chars)")
+
     if _handle_send_command(text, chat_id, message_id, config):
         return config
     if _handle_confirm_command(text, chat_id, message_id, config):
@@ -238,6 +243,8 @@ def _handle_message(update: dict, config: dict) -> dict:
     reply_text = parsed.get("reply_text")
     if reply_text:
         notifier.reply(chat_id, reply_text, reply_to_message_id=message_id)
+        events.emit("poller", "message_out", f"Replied to you ({len(reply_text)} chars)",
+                    application_id=quoted_application_id)
         print(f"  -> {reply_text!r}")
 
     settings_change = parsed.get("settings_change")

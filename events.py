@@ -3,8 +3,8 @@ A small activity log the dashboard reads to show what the agents are doing, live
 
 Every agent run, tool call, scheduler job, Telegram message and notification appends one
 line to data/events.jsonl. Each event is short on purpose: who did what, one line of
-detail, and (when relevant) which application. Full emails, cover letters and message
-text are never logged here.
+detail, and (when relevant) which application. Full emails, cover letters and the text of
+your messages are never logged here (only short commands such as "send ab12cd").
 
 Logging is best-effort: emit() never raises, so a full disk or a locked file can't break
 an agent run.
