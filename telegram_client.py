@@ -13,11 +13,24 @@ TELEGRAM_BOT_TOKEN environment variable, the same pattern as ANTHROPIC_API_KEY.
 from __future__ import annotations
 
 import os
+import time
 
 import requests
 
 API_BASE = "https://api.telegram.org/bot{token}"
-REQUEST_TIMEOUT = 20
+REQUEST_TIMEOUT = 30
+RETRIES = 4  # the connection to api.telegram.org is flaky on some networks: retry timeouts
+
+
+def _request(method: str, url: str, **kwargs) -> requests.Response:
+    """requests.get/post with retries on timeouts and dropped connections."""
+    for attempt in range(RETRIES):
+        try:
+            return requests.request(method, url, **kwargs)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+            if attempt == RETRIES - 1:
+                raise
+            time.sleep(2 * (attempt + 1))
 
 
 class TelegramNotConfigured(RuntimeError):
@@ -35,7 +48,7 @@ def _token() -> str:
 
 
 def get_me() -> dict:
-    resp = requests.get(API_BASE.format(token=_token()) + "/getMe", timeout=REQUEST_TIMEOUT)
+    resp = _request("GET", API_BASE.format(token=_token()) + "/getMe", timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     return resp.json()["result"]
 
@@ -45,7 +58,8 @@ def send_message(chat_id: str, text: str, reply_to_message_id: int | None = None
     payload = {"chat_id": chat_id, "text": text}
     if reply_to_message_id is not None:
         payload["reply_to_message_id"] = reply_to_message_id
-    resp = requests.post(
+    resp = _request(
+        "POST",
         API_BASE.format(token=_token()) + "/sendMessage",
         json=payload,
         timeout=REQUEST_TIMEOUT,
@@ -62,7 +76,8 @@ def get_updates(offset: int | None = None, timeout: int = 30) -> list[dict]:
     params = {"timeout": timeout}
     if offset is not None:
         params["offset"] = offset
-    resp = requests.get(
+    resp = _request(
+        "GET",
         API_BASE.format(token=_token()) + "/getUpdates",
         params=params,
         timeout=timeout + REQUEST_TIMEOUT,
