@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 
+import events
 import notifications
 import telegram_client
 
@@ -97,6 +98,8 @@ def send_notification(template: str, variables: list, application_id: str | None
     bot_token_set = bool(os.environ.get("TELEGRAM_BOT_TOKEN"))
 
     if not chat_id or not bot_token_set:
+        events.emit("notifier", "error", f"{template} not delivered: Telegram is not configured",
+                    application_id=application_id)
         notifications.record_notification(application_id, template, variables, urgent, delivered=False)
         return {
             "delivered": False,
@@ -108,6 +111,8 @@ def send_notification(template: str, variables: list, application_id: str | None
     try:
         result = telegram_client.send_message(chat_id, text)
     except Exception as exc:  # noqa: BLE001 - never let a delivery failure crash the caller
+        events.emit("notifier", "error", f"{template} not delivered: {str(exc)[:120]}",
+                    application_id=application_id)
         notifications.record_notification(application_id, template, variables, urgent, delivered=False)
         return {"delivered": False, "message_id": None, "reason": str(exc)}
 
@@ -116,6 +121,8 @@ def send_notification(template: str, variables: list, application_id: str | None
         application_id, template, variables, urgent,
         message_id=message_id, delivered=True,
     )
+    events.emit("notifier", "notification", f"Sent {template} to you", application_id=application_id,
+                template=template)
     return {"delivered": True, "message_id": message_id, "reason": None}
 
 
