@@ -15,8 +15,8 @@ Usage:
     python poll_telegram.py
 
 Requires:
-    pip install anthropic requests
-    set ANTHROPIC_API_KEY=sk-ant-...
+    pip install requests   (plus `anthropic` only if using the Anthropic backend)
+    set LLM_API_KEY=...   (free Gemini/Groq key; or ANTHROPIC_API_KEY)
     set TELEGRAM_BOT_TOKEN=123456:ABC-...
 """
 
@@ -26,6 +26,8 @@ import json
 import os
 import sys
 import time
+
+import requests
 
 import agent_common as common
 import notifications
@@ -76,14 +78,81 @@ def _setup_mode(config: dict) -> None:
     print("No messages yet. Send your bot a message and run this script again.")
 
 
-def _apply_settings_change(config: dict, settings_change: dict) -> dict:
-    if "PAUSED" in settings_change:
-        config["PAUSED"] = bool(settings_change["PAUSED"])
-    if "MODE" in settings_change and settings_change["MODE"] in ("APPROVAL", "AUTO"):
-        config["MODE"] = settings_change["MODE"]
+def _apply_settings_change(config: dict, settings_change: dict, chat_id: str) -> dict:
+    """
+    Applies a settings change proposed by Agent 3. Changes that make the system safer
+    (pausing, switching to APPROVAL) apply straight away. Changes that loosen it (resuming
+    from a pause, switching to AUTO) are NOT applied here: only the candidate typing
+    CONFIRM AUTO / CONFIRM RESUME can do that (see _handle_confirm_command), so a model
+    mistake can never loosen the safeguards on its own.
+    """
+    needs_confirmation = []
+    if settings_change.get("PAUSED") is True:
+        config["PAUSED"] = True
+    elif settings_change.get("PAUSED") is False and config.get("PAUSED"):
+        needs_confirmation.append("CONFIRM RESUME")
+    mode = settings_change.get("MODE")
+    if mode == "APPROVAL":
+        config["MODE"] = "APPROVAL"
+    elif mode == "AUTO" and config.get("MODE") != "AUTO":
+        needs_confirmation.append("CONFIRM AUTO")
     _save_config(config)
-    print(f"Applied settings_change: {settings_change}")
+    print(f"Applied settings_change (safe parts only): {settings_change}")
+    for phrase in needs_confirmation:
+        notifier.reply(chat_id, _confirm_prompt(phrase, config))
     return config
+
+
+def _confirm_prompt(phrase: str, config: dict) -> str:
+    if phrase == "CONFIRM AUTO":
+        return (f"Auto mode applies only to jobs scoring {config.get('MATCH_THRESHOLD_AUTO')}+ "
+                f"with no approval flags, up to {config.get('MAX_APPLICATIONS_PER_DAY')} a day. "
+                "Type CONFIRM AUTO to switch.")
+    return "Type CONFIRM RESUME to resume the system."
+
+
+def _handle_confirm_command(text: str, chat_id: str, message_id: int, config: dict) -> bool:
+    """Exact-phrase commands handled in code (no LLM): only you can type these."""
+    phrase = " ".join(text.strip().upper().split())
+    if phrase == "CONFIRM AUTO":
+        config["MODE"] = "AUTO"
+        reply = (f"Switched to AUTO mode. Jobs scoring {config.get('MATCH_THRESHOLD_AUTO')}+ with no "
+                 f"approval flags go straight to Ready to Apply, up to "
+                 f"{config.get('MAX_APPLICATIONS_PER_DAY')} applications a day. "
+                 "Emails still wait for your \"send <id>\".")
+    elif phrase == "CONFIRM RESUME":
+        config["PAUSED"] = False
+        reply = "Resumed. The agents will run again."
+    else:
+        return False
+    _save_config(config)
+    print(f"Applied {phrase} from the candidate.")
+    notifier.reply(chat_id, reply, reply_to_message_id=message_id)
+    return True
+
+
+def _record_sent_email(result: dict, pending_id: str, config: dict) -> None:
+    """Updates the tracker after an email the candidate approved has actually gone out."""
+    app_id = result.get("application_id")
+    if not app_id:
+        return
+    kind = result.get("kind") or "apply"
+    note = f"{kind} email sent via SMTP (pending_id={pending_id})"
+    try:
+        if kind == "apply":
+            update = {"status": "Applied", "application_method": "email",
+                      "date_applied": common.today_block(config["TIMEZONE"])[1]}
+        elif kind == "follow_up":
+            record = tracker.tracker_get(app_id)
+            update = {"follow_ups_sent": (record.get("follow_ups_sent") or 0) + 1,
+                      "flags": [f for f in (record.get("flags") or []) if f != "follow_up_due"]}
+        elif kind == "withdraw":
+            update = {"status": "Withdrawn"}
+        else:
+            update = {}
+        tracker.tracker_upsert({"application_id": app_id, "history_note": note, **update}, config=config)
+    except tracker.TrackerError as exc:
+        print(f"  Sent, but could not update tracker: {exc}")
 
 
 def _handle_send_command(text: str, chat_id: str, message_id: int, config: dict) -> bool:
@@ -100,20 +169,37 @@ def _handle_send_command(text: str, chat_id: str, message_id: int, config: dict)
     pending_id = parts[1]
     result = tools.dispatch_pending_email(pending_id, config)
     if result["ok"]:
-        notifier.reply(chat_id, f"Sent ✅ (to {result['to']})", reply_to_message_id=message_id)
-        app_id = result.get("application_id")
-        if app_id:
-            try:
-                tracker.tracker_upsert({
-                    "application_id": app_id, "status": "Applied",
-                    "application_method": "email",
-                    "date_applied": common.today_block(config["TIMEZONE"])[1],
-                    "history_note": f"email sent via SMTP (pending_id={pending_id})",
-                }, config=config)
-            except tracker.TrackerError as exc:
-                print(f"  Sent, but could not update tracker: {exc}")
+        notifier.reply(chat_id, f"Sent \u2705 ({result.get('kind', 'apply').replace('_', '-')} to {result['to']})",
+                       reply_to_message_id=message_id)
+        _record_sent_email(result, pending_id, config)
     else:
         notifier.reply(chat_id, f"Could not send: {result['error']}", reply_to_message_id=message_id)
+    return True
+
+
+def _handle_discard_command(text: str, chat_id: str, message_id: int, config: dict) -> bool:
+    """"discard <pending_id>": drop a staged email you don't want sent (also lets the next
+    follow-up check try again for that application)."""
+    parts = text.strip().split()
+    if len(parts) != 2 or parts[0].lower() != "discard":
+        return False
+    result = tools.discard_pending_email(parts[1])
+    if not result["ok"]:
+        notifier.reply(chat_id, f"Could not discard: {result['error']}", reply_to_message_id=message_id)
+        return True
+    app_id = result.get("application_id")
+    if app_id and result.get("kind") == "follow_up":
+        try:
+            record = tracker.tracker_get(app_id)
+            tracker.tracker_upsert({
+                "application_id": app_id,
+                "flags": [f for f in (record.get("flags") or []) if f != "follow_up_due"],
+                "history_note": f"follow-up draft discarded (pending_id={parts[1]})",
+            }, config=config)
+        except tracker.TrackerError as exc:
+            print(f"  Discarded, but could not update tracker: {exc}")
+    notifier.reply(chat_id, f"Discarded the draft to {result['to']}. Nothing was sent.",
+                   reply_to_message_id=message_id)
     return True
 
 
@@ -124,6 +210,10 @@ def _handle_message(update: dict, config: dict) -> dict:
     message_id = message["message_id"]
 
     if _handle_send_command(text, chat_id, message_id, config):
+        return config
+    if _handle_confirm_command(text, chat_id, message_id, config):
+        return config
+    if _handle_discard_command(text, chat_id, message_id, config):
         return config
 
     quoted_application_id = None
@@ -152,7 +242,7 @@ def _handle_message(update: dict, config: dict) -> dict:
 
     settings_change = parsed.get("settings_change")
     if settings_change:
-        config = _apply_settings_change(config, settings_change)
+        config = _apply_settings_change(config, settings_change, chat_id)
 
     handoff = parsed.get("handoff")
     if handoff and handoff.get("to"):
@@ -182,6 +272,11 @@ def poll_once(config: dict) -> dict:
             config = _handle_message(update, config)
         except Exception as exc:  # noqa: BLE001 - keep the loop alive on a single bad message
             print(f"Error handling message: {exc}", file=sys.stderr)
+            try:
+                notifier.reply(chat_id, "Sorry, I hit an error handling that. Please try again in a minute.",
+                               reply_to_message_id=message["message_id"])
+            except Exception:  # noqa: BLE001 - never let the error notice itself crash the loop
+                pass
 
     return config
 
@@ -206,7 +301,12 @@ def main() -> None:
           f"(Ctrl+C to stop)...")
     try:
         while True:
-            config = poll_once(config)
+            try:
+                config = poll_once(config)
+            except (requests.exceptions.RequestException, RuntimeError) as exc:
+                # A network blip must not kill the loop: wait briefly and poll again.
+                print(f"Telegram poll failed ({exc}); retrying in 5s...", file=sys.stderr)
+                time.sleep(5)
     except KeyboardInterrupt:
         print("\nStopped.")
 
