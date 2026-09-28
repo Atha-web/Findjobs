@@ -61,9 +61,19 @@ TOOLS = [
 ]
 
 
+DEFAULT_MAX_WEB_SEARCHES = 8
+
+
 def make_dispatch(config: dict, today_date: str):
+    searches = {"used": 0}
+    budget = config.get("MAX_WEB_SEARCHES_PER_RUN", DEFAULT_MAX_WEB_SEARCHES)
+
     def dispatch(name: str, tool_input: dict) -> dict:
         if name == "web_search":  # only reached on non-Anthropic backends
+            if searches["used"] >= budget:
+                return {"ok": False, "results": [], "error": f"Search budget used up ({budget} searches this run). "
+                        "Work with the listings you have already found: fetch, score and save them."}
+            searches["used"] += 1
             return tools.web_search(tool_input["query"])
         if name == "fetch_page":
             return tools.fetch_page(tool_input["url"])
