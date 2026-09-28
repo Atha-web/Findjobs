@@ -105,6 +105,8 @@ class DemoSource:
     # ---- the scripted day
     def _emit(self, agent: str, type_: str, summary: str, app: str | None = None,
               run_id: str | None = None, **data) -> None:
+        if type_ in ("tool", "tool_result"):  # real events carry the tool name too
+            data.setdefault("tool", summary.split()[0].rstrip(":"))
         with self._lock:
             self._last_id = max(int(time.time() * 1_000_000), self._last_id + 1)
             self._events.append({
