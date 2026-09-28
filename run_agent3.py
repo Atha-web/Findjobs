@@ -119,6 +119,9 @@ def run(mode: str, *, text: str | None = None, quoted_application_id: str | None
         user_content="\n\n".join(parts),
         dispatch=make_dispatch(config),
         label_fn=lambda inp: inp.get("application_id") or inp.get("filters") or "",
+        agent="agent3",
+        application_id=quoted_application_id,
+        context=f"{mode} mode",
     )
 
     common.save_run("agent3", today_date, final_text)

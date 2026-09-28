@@ -175,6 +175,9 @@ def main() -> None:
         user_content=user_content,
         dispatch=make_dispatch(config, args.application_id, args.task),
         label_fn=lambda inp: inp.get("application_id") or inp.get("to") or inp.get("version") or "",
+        agent="agent2",
+        application_id=args.application_id,
+        context=f"{args.task} {args.application_id}",
     )
 
     print("\n----- Agent 2 output -----\n")

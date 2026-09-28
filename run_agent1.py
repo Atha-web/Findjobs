@@ -112,6 +112,8 @@ def main() -> None:
         user_content="\n\n".join(user_parts),
         dispatch=make_dispatch(config, today_date),
         label_fn=lambda inp: inp.get("url") or inp.get("query") or (inp.get("record") or {}).get("company") or inp.get("filters") or "",
+        agent="agent1",
+        context="daily job search",
     )
 
     print("\n----- Agent 1 output -----\n")

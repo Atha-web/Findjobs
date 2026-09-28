@@ -25,6 +25,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+import events
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LLM_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 DEFAULT_LLM_MODEL = "gemini-3.8-flash"
@@ -81,6 +83,7 @@ def _run_tool_loop_anthropic(
     user_content: str,
     dispatch: Callable[[str, dict], dict],
     label_fn: Callable[[Any], str] | None = None,
+    on_round: Callable[[int], None] | None = None,
 ) -> str:
     """
     Drives the Anthropic messages loop until the model stops calling tools.
@@ -94,6 +97,8 @@ def _run_tool_loop_anthropic(
     messages = [{"role": "user", "content": user_content}]
 
     for round_n in range(1, MAX_TOOL_ROUNDS + 1):
+        if on_round:
+            on_round(round_n)
         response = client.messages.create(
             model=MODEL,
             max_tokens=8000,
@@ -193,6 +198,7 @@ def _run_tool_loop_openai(
     user_content: str,
     dispatch: Callable[[str, dict], dict],
     label_fn: Callable[[Any], str] | None = None,
+    on_round: Callable[[int], None] | None = None,
 ) -> str:
     """Same loop as the Anthropic one, over an OpenAI-compatible /chat/completions API."""
     oa_tools = _to_openai_tools(tools)
@@ -202,6 +208,8 @@ def _run_tool_loop_openai(
     ]
 
     for round_n in range(1, MAX_TOOL_ROUNDS + 1):
+        if on_round:
+            on_round(round_n)
         payload = {"model": MODEL, "messages": messages}
         if oa_tools:
             payload["tools"] = oa_tools
@@ -238,16 +246,67 @@ def _run_tool_loop_openai(
     sys.exit(2)
 
 
+def _result_summary(result: Any) -> str:
+    """One short line describing a tool result, for the activity log (never the content)."""
+    if not isinstance(result, dict):
+        return "ok"
+    if result.get("error"):
+        return f"error: {str(result['error'])[:90]}"
+    if isinstance(result.get("results"), list):
+        return f"{len(result['results'])} results"
+    if result.get("ok") is False:
+        return "not ok"
+    if isinstance(result.get("record"), dict) and result["record"].get("application_id"):
+        return f"saved {result['record']['application_id']} ({result['record'].get('status')})"
+    return "ok"
+
+
 def run_tool_loop(
     system_prompt: str,
     tools: list[dict],
     user_content: str,
     dispatch: Callable[[str, dict], dict],
     label_fn: Callable[[Any], str] | None = None,
+    agent: str = "agent",
+    application_id: str | None = None,
+    context: str | None = None,
 ) -> str:
-    """Drives the model <-> tools loop on whichever backend is configured (see module docstring)."""
+    """
+    Drives the model <-> tools loop on whichever backend is configured (see module docstring)
+    and reports what happens to the activity log (events.py) so the dashboard can show it live.
+    """
+    run_id = events.new_run_id()
+
+    def emit(type_: str, summary: str, **data) -> None:
+        events.emit(agent, type_, summary, application_id=application_id, run_id=run_id, **data)
+
+    def logged_dispatch(name: str, tool_input: dict) -> dict:
+        label = str(label_fn(tool_input)) if label_fn else ""
+        emit("tool", f"{name} {label}".strip(), tool=name)
+        try:
+            result = dispatch(name, tool_input)
+        except Exception as exc:  # noqa: BLE001 - report, then let the loop handle it as before
+            emit("tool_result", f"{name}: error: {str(exc)[:90]}", tool=name, ok=False)
+            raise
+        summary = _result_summary(result)
+        emit("tool_result", f"{name}: {summary}", tool=name, ok=not summary.startswith("error"))
+        return result
+
+    emit("run_start", f"Started{' - ' + context if context else ''} ({MODEL})")
     loop = _run_tool_loop_openai if _use_openai_compat() else _run_tool_loop_anthropic
-    return loop(system_prompt, tools, user_content, dispatch, label_fn)
+    try:
+        text = loop(system_prompt, tools, user_content, logged_dispatch, label_fn,
+                    on_round=lambda n: emit("llm", f"Round {n}: asking the model", round=n))
+    except SystemExit:
+        emit("error", "Stopped: hit the tool-round limit without a final answer")
+        emit("run_end", "Failed", ok=False)
+        raise
+    except Exception as exc:  # noqa: BLE001
+        emit("error", str(exc)[:180])
+        emit("run_end", "Failed", ok=False)
+        raise
+    emit("run_end", "Finished", ok=True)
+    return text
 
 
 def save_run(agent_name: str, date_str: str, text: str) -> str:
