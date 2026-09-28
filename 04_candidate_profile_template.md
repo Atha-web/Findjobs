@@ -13,9 +13,9 @@ Fill this in once and keep it current. The agents treat everything here as true 
 
 ## What you're looking for
 
-- Target roles (strong fit): Reporting Analyst, Data Analyst
+- Target roles (strong fit): Reporting Analyst, MIS
 - Adjacent roles (only with your approval): Business Analyst, Operations Analyst
-- Roles to avoid:
+- Roles to avoid: Data Entry, Customer Care Executive
 - Preferred locations: Colombo, Sri Lanka; open to remote roles anywhere
 - Open to relocation (and where): Yes — anywhere, for a remote/hybrid B2B tech or reporting role
 - Work arrangement, in order of preference: remote / hybrid (Colombo, Sri Lanka) / on-site (Colombo, Sri Lanka)
@@ -25,10 +25,10 @@ Fill this in once and keep it current. The agents treat everything here as true 
 
 ## Salary
 
-- Currency and period (monthly or annual): USD, monthly
-- Expected: 1000
-- Minimum acceptable: 800
-- Salary disclosure rule (what to enter when a form asks): If optional, leave blank. If required, give the expected figure ($1,000/month USD).
+- Currency and period (monthly or annual): LKR, monthly
+- Expected: 180,000
+- Minimum acceptable: 150,000
+- Salary disclosure rule (what to enter when a form asks): If optional, leave blank. If required, give the expected figure (Rs.180,000/month LKR).
 
 ## Availability and eligibility
 
@@ -43,7 +43,7 @@ Fill this in once and keep it current. The agents treat everything here as true 
 
 | Version | File | Use for |
 |---|---|---|
-| general | Ameerul Athallah Resume.pdf | Default — Reporting Analyst, Data Analyst, Business Analyst, Operations Analyst roles |
+| general | Ameerul Athallah Resume.pdf | Default — Reporting Analyst, MIS, Business Analyst, Operations Analyst roles |
 
 ## Experience
 
@@ -121,7 +121,8 @@ With experience in reporting, data management, CRM systems, and ERP environments
 
 Please find my resume attached for your consideration. I would welcome the opportunity to discuss how my experience could contribute to your team.
 
-Best regards, Ameerul Athallah
+Best regards,
+Ameerul Athallah
 
 2. Recruiter outreach message:
 Hi (Recruiter's Name),
@@ -132,7 +133,8 @@ Could you please share more details about the role and the application process?
 
 Thank you.
 
-Best regards, Ameerul
+Best regards,
+Ameerul
 
 3. Interview thank-you email:
 Subject: Thank You – (Job Title) Interview
@@ -143,7 +145,8 @@ Thank you for taking the time to speak with me about the (Job Title) position at
 
 I appreciated learning more about the role and the team. Our conversation strengthened my interest in the opportunity, and I look forward to hearing from you regarding the next steps.
 
-Best regards, Ameerul Athallah
+Best regards, 
+Ameerul Athallah
 
 Additional templates on file for the agent to draw on: recruiter follow-up email, interview availability confirmation. Both follow the same structure and sign-offs as above.
 
