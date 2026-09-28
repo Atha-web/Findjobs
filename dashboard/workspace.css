@@ -1,0 +1,77 @@
+/* The Workspace view: a cutaway office where the agents are robots. Colours come from the
+   page's theme variables, so it follows light and dark mode. */
+#space { width: 100%; min-width: 720px; height: auto; display: block; }
+#space text { font-family: inherit; }
+.ws-wall { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+.ws-slab { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+.ws-ground { fill: var(--surface-2); }
+.ws-part { stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 4 5; fill: none; }
+.ws-room-label { font-size: 11.5px; font-weight: 650; fill: var(--ink-2); letter-spacing: 0.02em; }
+.ws-note { font-size: 10.5px; fill: var(--ink-3); }
+.ws-desk { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.3; }
+.ws-desk-top { fill: var(--line-strong); }
+.ws-prop { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+.ws-paper { fill: #ffffff; stroke: var(--line-strong); stroke-width: 1; }
+.ws-ink { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; }
+.ws-glass { fill: var(--accent-soft); stroke: var(--line-strong); stroke-width: 1.2; }
+.ws-tube { fill: none; stroke: var(--line-strong); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.ws-tube-in { fill: none; stroke: var(--surface); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.ws-hole { fill: var(--ink-3); }
+.ws-sign { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.3; }
+.ws-sign-text { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.ws-screen { fill: #1d2733; stroke: var(--ink-3); stroke-width: 1.2; }
+.ws-screen.on { fill: #6fd3ff; animation: ws-scan 1.1s ease-in-out infinite; }
+.ws-screen.err { fill: var(--critical); }
+.ws-drawer { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; transition: transform 0.35s ease; }
+.ws-drawer.open { transform: translateX(11px); }
+.ws-flag { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.4s ease; }
+.ws-flag.up { transform: rotate(-70deg); }
+.ws-globe-spin { transform-box: fill-box; transform-origin: center; }
+.ws-globe.busy .ws-globe-spin { animation: ws-spin 1.2s ease-in-out infinite; }
+.ws-signal { fill: none; stroke: var(--ink-3); stroke-width: 1.4; opacity: 0.5; }
+.ws-floaty { font-size: 12.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; animation: ws-floatup 2.6s ease-out forwards; }
+.ws-packet-glyph { font-size: 11px; font-weight: 700; fill: var(--ink); }
+.ws-shadow { fill: rgba(0, 0, 0, 0.13); }
+
+/* robots */
+.rb .leg, .rb .arm { transform-box: fill-box; transform-origin: 50% 0%; }
+.rb .head { transform-box: fill-box; transform-origin: 50% 100%; }
+.rb .eye { fill: var(--ink); transform-box: fill-box; transform-origin: center; animation: ws-blink 5s infinite; }
+.rb .mouth { stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; fill: none; }
+.rb .badge { font-size: 12px; font-weight: 700; fill: var(--critical); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.rb .zzz { font-size: 11px; font-weight: 700; fill: var(--ink-3); opacity: 0; }
+.rb.sleep .zzz { animation: ws-zzz 2.4s ease-in-out infinite; }
+.rb.stand .inner, .rb.sit .inner { animation: ws-breathe 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.rb.walk .leg-l, .rb.walk .arm-r { animation: ws-swingA 0.42s ease-in-out infinite; }
+.rb.walk .leg-r, .rb.walk .arm-l { animation: ws-swingB 0.42s ease-in-out infinite; }
+.rb.walk .inner { animation: ws-bob 0.21s ease-in-out infinite; }
+.rb.sit .leg, .rb.type .leg, .rb.sleep .leg { transform: rotate(-86deg); }
+.rb.type .arm-l { animation: ws-typeA 0.28s ease-in-out infinite; }
+.rb.type .arm-r { animation: ws-typeB 0.28s ease-in-out infinite; }
+.rb.sit .arm, .rb.sleep .arm { transform: rotate(-50deg); }
+.rb.sleep .head { transform: rotate(18deg); }
+.rb.sleep { opacity: 0.6; filter: grayscale(0.8); }
+.rb.error .inner { animation: ws-shake 0.35s linear infinite; }
+.bubble { opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+.bubble.show { opacity: 1; }
+.bubble rect { fill: var(--surface); stroke-width: 1.5; }
+.bubble text { font-size: 11.5px; fill: var(--ink); }
+
+@keyframes ws-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, 1.04); } }
+@keyframes ws-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes ws-swingA { 0%, 100% { transform: rotate(-32deg); } 50% { transform: rotate(32deg); } }
+@keyframes ws-swingB { 0%, 100% { transform: rotate(32deg); } 50% { transform: rotate(-32deg); } }
+@keyframes ws-typeA { 0%, 100% { transform: rotate(-64deg); } 50% { transform: rotate(-84deg); } }
+@keyframes ws-typeB { 0%, 100% { transform: rotate(-88deg); } 50% { transform: rotate(-66deg); } }
+@keyframes ws-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+@keyframes ws-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+@keyframes ws-zzz { 0% { opacity: 0; transform: translate(0, 0); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -12px); } }
+@keyframes ws-scan { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+@keyframes ws-spin { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.25); } }
+@keyframes ws-floatup { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-30px); opacity: 0; } }
+
+.tabs { display: inline-flex; gap: 4px; margin-left: auto; }
+.tab { font: inherit; font-size: 12px; padding: 3px 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 650; }
+.panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.panel-head h2 { margin: 0; }
