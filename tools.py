@@ -31,6 +31,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import email_smtp
+import events
 import notifier
 import tracker
 
@@ -184,6 +185,8 @@ def _stage_email(kind: str, to: str, subject: str, body: str, attachments: list 
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
+    events.emit("mailer", "email", f"Staged a {kind.replace('_', '-')} email for your approval (send {pending_id})",
+                application_id=application_id, pending_id=pending_id, kind=kind)
     return pending_id, path
 
 
@@ -293,7 +296,7 @@ def _sent_on(payload: dict, config: dict) -> str:
         return stamp[:10]
 
 
-def dispatch_pending_email(pending_id: str, config: dict) -> dict:
+def _dispatch_pending_email(pending_id: str, config: dict) -> dict:
     """
     Actually sends a staged email via SMTP. Only call this after the candidate has
     explicitly confirmed (e.g. replied "send <pending_id>" on Telegram) - never from
@@ -372,3 +375,15 @@ def dispatch_pending_email(pending_id: str, config: dict) -> dict:
 
     return {"ok": True, "application_id": app_id, "to": payload["to"], "kind": kind,
             "subject": payload["subject"]}
+
+
+def dispatch_pending_email(pending_id: str, config: dict) -> dict:
+    """Sends a staged email the candidate approved (see _dispatch_pending_email) and logs the outcome."""
+    result = _dispatch_pending_email(pending_id, config)
+    if result.get("ok"):
+        events.emit("mailer", "email", f"Sent a {str(result.get('kind', 'apply')).replace('_', '-')} email",
+                    application_id=result.get("application_id"), pending_id=pending_id)
+    else:
+        events.emit("mailer", "error", f"Email not sent: {str(result.get('error'))[:140]}",
+                    pending_id=pending_id)
+    return result
