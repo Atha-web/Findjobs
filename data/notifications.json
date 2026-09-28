@@ -1,0 +1,20 @@
+[
+  {
+    "message_id": 2,
+    "application_id": "APP-0002",
+    "template": "approval_request",
+    "variables": [
+      58,
+      "Senior Business Analyst",
+      "Sysco",
+      "Sri Lanka (Remote)",
+      null,
+      "Wants stakeholder communication and business partnering; candidate acted as a reporting business partner to sales and operations teams at SHAA Enterprises, answering data queries and preparing management materials.; Wants analytical/logical reasoning; candidate has two years of hands-on data extraction, transformation and QA/QC work across CRM (Ventura) and ERP (IFS) systems.; Degree requirement (IT/Management/Economics/Finance) is a reasonable match for a BSc (Hons) in Data Science plus a Higher Diploma in Computing & Software Engineering.",
+      "Asks for 3-4 years specifically as a Business Analyst; candidate has no formally BA-titled experience, only ~1.3 years of adjacent reporting/business-partnering work at SHAA Enterprises.; Wants a software development or quality engineering background; none on the profile.; Wants Agile/RUP/waterfall methodology experience and formal user-story/requirements writing; not evidenced on the profile.; SQL (DBeaver/SQL Developer) is listed as a plus; candidate has no SQL experience.",
+      "APP-0002"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-09-25T13:29:35+00:00"
+  }
+]
