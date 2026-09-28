@@ -109,7 +109,7 @@ Save the cover letter, the email and every screening answer to the record exactl
 
 Run only when the record has `follow_up_due`, a verified recruiter email, `follow_ups_sent` below `MAX_FOLLOW_UPS`, and status `Applied`.
 
-Draft with `email_draft`, never `email_send`; the candidate approves on WhatsApp first. Reply in the original thread if an email was sent before. Keep it under 80 words: the role and the date applied, one line saying the candidate is still interested, optionally one relevant fact from the profile not mentioned before, and an offer to send anything else. No pressure and no "just checking in".
+Draft with `email_draft`, never `email_send`; the candidate approves on Telegram first (the draft is sent to them with a `send <id>` reply). Reply in the original thread if an email was sent before. Keep it under 80 words: the role and the date applied, one line saying the candidate is still interested, optionally one relevant fact from the profile not mentioned before, and an offer to send anything else. No pressure and no "just checking in".
 
 ## Task: withdraw
 

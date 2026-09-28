@@ -4,7 +4,7 @@ candidate_profile/config/today plus the message or email and <recent_notificatio
 wrapped as input.
 
 Agent 3 only ever touches the tracker (tracker_search / tracker_get / tracker_upsert). It
-never sends a WhatsApp/Telegram reply or an email itself - it returns reply_text / a
+never sends a Telegram reply or an email itself - it returns reply_text / a
 notification / a handoff, and the caller (poll_telegram.py for live use, or this file's
 CLI for manual testing) is what actually delivers or prints them.
 
@@ -14,7 +14,7 @@ CLI usage (manual testing, does not deliver anything):
     python run_agent3.py --mode email --email-json path/to/email.json
 
 Requires:
-    pip install anthropic requests
+    pip install requests   (plus `anthropic` only if using the Anthropic backend)
     set ANTHROPIC_API_KEY=sk-ant-...
 """
 
@@ -99,11 +99,11 @@ def run(mode: str, *, text: str | None = None, quoted_application_id: str | None
     ]
 
     if mode == "message":
-        whatsapp_message = {
+        telegram_message = {
             "text": text,
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
-        parts.append(f"<whatsapp_message>\n{json.dumps(whatsapp_message, indent=2)}\n</whatsapp_message>")
+        parts.append(f"<telegram_message>\n{json.dumps(telegram_message, indent=2)}\n</telegram_message>")
         if quoted_application_id:
             parts.append(f"<quoted_application_id>{quoted_application_id}</quoted_application_id>")
         if quoted_notification_type:
@@ -128,7 +128,7 @@ def run(mode: str, *, text: str | None = None, quoted_application_id: str | None
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["message", "email"], required=True)
-    parser.add_argument("--text", help="Message mode: the WhatsApp/Telegram message text")
+    parser.add_argument("--text", help="Message mode: the Telegram message text")
     parser.add_argument("--quoted-application-id", default=None)
     parser.add_argument("--quoted-notification-type", default=None)
     parser.add_argument("--email-json", help="Email mode: path to a JSON file with the email")
