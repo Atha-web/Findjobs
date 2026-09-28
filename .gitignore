@@ -4,3 +4,5 @@ runs/
 logs/
 data/events.jsonl
 data/events.jsonl.tmp
+data/heartbeat_*.json
+data/heartbeat_*.json.tmp

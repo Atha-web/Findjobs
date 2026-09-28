@@ -91,3 +91,29 @@ def read_after(after_id: int = 0, limit: int = 500, path: str | None = None) -> 
         if event.get("id", 0) > after_id:
             events.append(event)
     return events[-limit:] if after_id == 0 else events[:limit]
+
+
+def heartbeat(name: str) -> None:
+    """Marks a long-running process (poller, scheduler) as alive. Kept out of the event feed:
+    one small file per process that is overwritten each time."""
+    try:
+        path = os.path.join(os.path.dirname(PATH), f"heartbeat_{name}.json")
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"ts": datetime.now(timezone.utc).isoformat(timespec="seconds")}, f)
+        os.replace(tmp, path)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def read_heartbeats() -> dict[str, str]:
+    """{process name: ISO timestamp of its last heartbeat}."""
+    found = {}
+    folder = os.path.dirname(PATH)
+    for name in ("poller", "scheduler"):
+        try:
+            with open(os.path.join(folder, f"heartbeat_{name}.json"), "r", encoding="utf-8") as f:
+                found[name] = json.load(f)["ts"]
+        except (OSError, ValueError, KeyError):
+            continue
+    return found
