@@ -123,12 +123,13 @@ These numbers are starting points. Adjust them after the first couple of weeks.
 
 ## Running it
 
-Double-click or run `start_agents.ps1`. It opens two windows:
+Double-click or run `start_agents.ps1`. It opens three windows:
 
 - **Findjobs: Telegram** runs `poll_telegram.py`, which answers your messages.
 - **Findjobs: Scheduler** runs `scheduler.py`, which does the daily jobs.
+- **Findjobs: Dashboard** runs `dashboard.py` and opens the live dashboard at http://127.0.0.1:8765/.
 
-Both must stay open. They load your saved environment variables themselves.
+The Telegram and Scheduler windows must stay open. They load your saved environment variables themselves. The dashboard is optional.
 
 The scheduler uses the times in `config.json` and its `TIMEZONE`. If the computer was off at a job's time, the job runs when the scheduler next starts that day. A failed job retries every 30 minutes, up to 3 times a day, then messages you. `PAUSED` stops the search, apply and follow-up jobs.
 
@@ -139,6 +140,19 @@ python scheduler.py --once             # run whatever is due, then exit
 ```
 
 Jobs: `daily_search`, `apply_queue`, `follow_up_check`, `no_response`, `daily_summary`, `weekly_summary`.
+
+### Live dashboard
+
+`python dashboard.py` (or the third window from `start_agents.ps1`) shows what the agents are doing as it happens:
+
+- an animated diagram of how the scheduler, agents, tracker, mailer and Telegram connect, where nodes glow and links pulse as things happen
+- a live activity feed (every model round, tool call, job, message and email), which you can filter by agent
+- one card per agent: working, idle or error, what it is doing now, and whether the Telegram listener and scheduler are online
+- the application pipeline by stage, what needs you, and when each job runs next
+
+Try it without running anything: `python dashboard.py --demo` replays a made-up day with fictional companies and never touches your real data. Add `?theme=light` or `?theme=dark` to the address to pick a theme.
+
+It is read-only and listens on 127.0.0.1 only, so other computers can't see it. Activity is logged to `data/events.jsonl` (git-ignored). Each entry is a short line: the agent, what it did, and the application ID. Emails, cover letters and the text of your messages are not logged.
 
 ### Commands you can type in Telegram
 
