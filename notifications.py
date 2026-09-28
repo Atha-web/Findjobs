@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import json
 import os
-import threading
 from datetime import datetime, timezone
 
-_LOCK = threading.Lock()
+import filelock
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(_DIR, "data", "notifications.json")
 
@@ -48,7 +48,7 @@ def record_notification(application_id: str, template: str, variables: list,
         "delivered": delivered,
         "sent_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
-    with _LOCK:
+    with filelock.locked("notifications"):
         data = _load()
         data.append(entry)
         data = data[-200:]  # keep the log bounded
@@ -57,13 +57,13 @@ def record_notification(application_id: str, template: str, variables: list,
 
 
 def recent(n: int = 20) -> list[dict]:
-    with _LOCK:
+    with filelock.locked("notifications"):
         data = _load()
     return data[-n:]
 
 
 def find_by_message_id(message_id: int) -> dict | None:
-    with _LOCK:
+    with filelock.locked("notifications"):
         data = _load()
     for entry in reversed(data):
         if entry.get("message_id") == message_id:
