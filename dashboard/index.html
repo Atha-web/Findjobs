@@ -104,6 +104,40 @@
   @keyframes halo { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
   @keyframes march { to { stroke-dashoffset: -12; } }
 
+  /* robots, packets, bubbles */
+  .av { pointer-events: none; }
+  .av-body { transform-box: fill-box; transform-origin: 50% 100%; }
+  .av-eye { fill: var(--ink); transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
+  .av-mouth { stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; }
+  .av-dots circle { fill: var(--ink-2); opacity: 0; }
+  .av-badge { font-size: 11px; font-weight: 700; fill: var(--critical); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+  .av.idle .av-body { animation: breathe 3.6s ease-in-out infinite; }
+  .av.working .av-body { animation: bob 0.5s ease-in-out infinite; }
+  .av.working .av-tip { animation: halo 0.8s ease-in-out infinite; }
+  .av.working .av-dots circle { animation: typing 1s infinite; }
+  .av.working .av-dots circle:nth-child(2) { animation-delay: 0.2s; }
+  .av.working .av-dots circle:nth-child(3) { animation-delay: 0.4s; }
+  .av.walking .av-body { animation: waddle 0.3s ease-in-out infinite; }
+  .av.hop .av-body { animation: hop 0.32s ease-in-out infinite; }
+  .av.error .av-body { animation: shake 0.35s linear infinite; }
+  .av.offline { opacity: 0.4; filter: grayscale(1); }
+  .bubble { opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+  .bubble.show { opacity: 1; }
+  .bubble rect { fill: var(--surface); stroke-width: 1.5; }
+  .bubble text { font-size: 11.5px; fill: var(--ink); }
+  .packet circle { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); }
+  .packet-glyph { font-size: 11px; font-weight: 700; fill: var(--ink); }
+  .floaty { font-size: 12.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; animation: floatup 2.4s ease-out forwards; }
+  .caption { color: var(--ink-3); font-size: 12px; margin: 8px 2px 0; }
+  @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 1.05); } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+  @keyframes waddle { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+  @keyframes typing { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+  @keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+  @keyframes floatup { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
+
   /* activity feed */
   .feed-tools { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
   select { font: inherit; font-size: 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 6px; padding: 3px 6px; }
@@ -179,7 +213,8 @@
   <section class="grid main">
     <div class="panel">
       <h2>How the agents work together</h2>
-      <div class="flowwrap"><svg id="flow" viewBox="0 0 900 375" role="img" aria-label="Diagram of how the scheduler, agents, tracker, mailer and Telegram connect"></svg></div>
+      <div class="flowwrap"><svg id="flow" viewBox="0 -44 900 424" role="img" aria-label="Diagram of how the scheduler, agents, tracker, mailer and Telegram connect"></svg></div>
+      <p class="caption">Robots walk to the tracker or mailer when they save or send. Envelopes and notes are messages and emails on their way.</p>
     </div>
     <div class="panel">
       <h2>Live activity</h2>
@@ -266,7 +301,7 @@ function clockText(iso, opts) {
   catch (e) { return new Date(iso).toLocaleString(); }
 }
 
-// ---------- flow diagram
+// ---------- flow diagram + animation
 const NODE_W = 165, NODE_H = 56;
 const NODES = {
   scheduler: { x: 15, y: 20, label: "Scheduler", sub: "runs the daily jobs" },
@@ -276,6 +311,7 @@ const NODES = {
   agent2: { x: 250, y: 165, label: "Application", sub: "Agent 2 · writes applications" },
   mailer: { x: 485, y: 165, label: "Mailer", sub: "stages and sends emails" },
   poller: { x: 720, y: 165, label: "Telegram listener", sub: "hears your messages" },
+  employer: { x: 250, y: 310, label: "Employer inbox", sub: "where applications land", place: true },
   notifier: { x: 485, y: 310, label: "Notifier", sub: "messages you" },
   you: { x: 720, y: 310, label: "You", sub: "on Telegram", you: true },
 };
@@ -287,12 +323,17 @@ const EDGES = {
   e_tracker_a2: { d: "M505 76 V120 H332 V165", label: "Ready to Apply", lx: 418, ly: 114 },
   e_a2_mailer: { d: "M415 193 H485", label: "stages", lx: 450, ly: 186 },
   e_mailer_notifier: { d: "M567 221 V310", label: "asks you", lx: 567, ly: 268 },
+  e_mailer_employer: { d: "M520 221 V266 H332 V310", label: "sent", lx: 426, ly: 259 },
   e_notifier_you: { d: "M650 338 H720", label: "message", lx: 685, ly: 331 },
   e_you_poller: { d: "M802 310 V221", label: "your reply", lx: 802, ly: 268 },
   e_poller_a3: { d: "M802 165 V76", label: "your replies", lx: 802, ly: 122 },
   e_poller_mailer: { d: "M720 193 H650", label: "send <id>", lx: 685, ly: 186 },
 };
-const nodeEls = {}, edgeEls = {};
+const AGENT_NODES = ["scheduler", "agent1", "agent2", "agent3", "poller", "notifier", "mailer"];
+const nodeEls = {}, edgeEls = {}, avatars = {};
+const layer = {};
+const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+const WALK_SPEED = 150, PACKET_SPEED = 240; // pixels per second in diagram units
 
 function buildFlow() {
   const root = $("flow");
@@ -302,7 +343,7 @@ function buildFlow() {
     const path = svg("path", { d: e.d, class: "edge", "marker-end": "url(#arrow)" });
     edgeEls[id] = path; root.append(path);
   }
-  for (const [id, e] of Object.entries(EDGES)) {
+  for (const e of Object.values(EDGES)) {
     root.append(svg("text", { x: e.lx, y: e.ly, "text-anchor": "middle", class: "edge-label" }, e.label));
   }
   for (const [id, n] of Object.entries(NODES)) {
@@ -316,6 +357,107 @@ function buildFlow() {
     if (n.store) g.append(svg("text", { x: NODE_W - 12, y: 25, "text-anchor": "end", class: "sub", id: "trackerCount" }, ""));
     nodeEls[id] = g; root.append(g);
   }
+  layer.sprites = svg("g", {});
+  for (const id of AGENT_NODES) buildAvatar(id, root);
+  root.append(layer.sprites);
+}
+
+function buildAvatar(id, root) {
+  const n = NODES[id], color = AGENT_COLORS[id];
+  const home = { x: n.x + NODE_W - 26, y: n.y - 2 };
+  const g = svg("g", { class: "av idle", transform: `translate(${home.x} ${home.y})` });
+  const body = svg("g", { class: "av-body" },
+    svg("line", { x1: 0, y1: -12, x2: 0, y2: -17, stroke: color, "stroke-width": 2, "stroke-linecap": "round" }),
+    svg("circle", { class: "av-tip", cx: 0, cy: -18, r: 2.6, fill: color }),
+    svg("rect", { x: -12, y: -12, width: 24, height: 22, rx: 8, fill: color }),
+    svg("rect", { x: -8.5, y: -7.5, width: 17, height: 11, rx: 5, fill: "var(--surface)" }),
+    svg("circle", { class: "av-eye", cx: -3.6, cy: -2, r: 1.9 }),
+    svg("circle", { class: "av-eye", cx: 3.6, cy: -2, r: 1.9 }),
+    svg("path", { class: "av-mouth", d: "M-3 1.8 Q0 3.8 3 1.8", fill: "none" }));
+  const dots = svg("g", { class: "av-dots" },
+    svg("circle", { cx: -6, cy: -27, r: 1.9 }), svg("circle", { cx: 0, cy: -27, r: 1.9 }), svg("circle", { cx: 6, cy: -27, r: 1.9 }));
+  const badge = svg("text", { class: "av-badge", x: 15, y: -8, "text-anchor": "middle" }, "");
+  g.append(body, dots, badge);
+  root.append(g);
+
+  const bubble = svg("g", { class: "bubble", transform: `translate(${home.x} ${home.y - 32})` });
+  const rect = svg("rect", { x: -60, y: -10, width: 60, height: 20, rx: 10, stroke: color });
+  const text = svg("text", { x: -30, y: 4, "text-anchor": "middle" }, "");
+  bubble.append(rect, text);
+  root.append(bubble);
+  avatars[id] = { g, home, badge, bubble, rect, text, queue: [], busy: false, bubbleTimer: null };
+}
+
+// --- motion helpers
+function samplePath(pathEl, step, reverse) {
+  const total = pathEl.getTotalLength(), pts = [];
+  for (let d = 0; d < total; d += step) { const p = pathEl.getPointAtLength(d); pts.push({ x: p.x, y: p.y }); }
+  const end = pathEl.getPointAtLength(total); pts.push({ x: end.x, y: end.y });
+  return reverse ? pts.reverse() : pts;
+}
+function animateAlong(group, pts, speed, done) {
+  const seg = [0];
+  for (let i = 1; i < pts.length; i++) seg.push(seg[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+  const total = seg[seg.length - 1] || 1, dur = (total / speed) * 1000, t0 = performance.now();
+  (function frame(t) {
+    const k = Math.min(1, (t - t0) / dur), dist = k * total;
+    let i = 1; while (i < seg.length - 1 && seg[i] < dist) i++;
+    const span = seg[i] - seg[i - 1] || 1, f = (dist - seg[i - 1]) / span;
+    const x = pts[i - 1].x + (pts[i].x - pts[i - 1].x) * f, y = pts[i - 1].y + (pts[i].y - pts[i - 1].y) * f;
+    group.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    if (k < 1) requestAnimationFrame(frame); else if (done) done();
+  })(t0);
+}
+function packet(edgeId, glyph, opts) {
+  const { reverse = false, color = "var(--accent)", delay = 0 } = opts || {};
+  if (REDUCED) return;
+  setTimeout(() => {
+    if (layer.sprites.childElementCount > 14) return;
+    const g = svg("g", { class: "packet" }, svg("circle", { r: 9, fill: "var(--surface)", stroke: color, "stroke-width": 2 }),
+      svg("text", { class: "packet-glyph", "text-anchor": "middle", y: 4 }, glyph));
+    layer.sprites.append(g);
+    animateAlong(g, samplePath(edgeEls[edgeId], 6, reverse), PACKET_SPEED, () => g.remove());
+  }, delay);
+}
+// a robot walks along an edge to the station at its end, works there for a moment, then walks back
+function trip(id, edgeId, opts) {
+  const a = avatars[id]; if (!a || REDUCED) return;
+  a.queue.push({ edgeId, reverse: !!(opts && opts.reverse), hold: (opts && opts.hold) || 900 });
+  if (a.queue.length > 3) a.queue.shift();
+  if (!a.busy) nextTrip(id);
+}
+function nextTrip(id) {
+  const a = avatars[id], job = a.queue.shift();
+  if (!job) { a.busy = false; return; }
+  a.busy = true;
+  const road = [a.home, ...samplePath(edgeEls[job.edgeId], 6, job.reverse)];
+  a.g.classList.add("walking");
+  animateAlong(a.g, road, WALK_SPEED, () => {
+    a.g.classList.replace("walking", "hop");
+    setTimeout(() => {
+      a.g.classList.replace("hop", "walking");
+      animateAlong(a.g, road.slice().reverse(), WALK_SPEED, () => {
+        a.g.setAttribute("transform", `translate(${a.home.x} ${a.home.y})`);
+        a.g.classList.remove("walking");
+        nextTrip(id);
+      });
+    }, job.hold);
+  });
+}
+function say(id, text, ms) {
+  const a = avatars[id]; if (!a) return;
+  const t = text.length > 34 ? text.slice(0, 33) + "…" : text;
+  const w = Math.max(44, t.length * 6.4 + 18);
+  a.text.textContent = t;
+  a.rect.setAttribute("width", w); a.rect.setAttribute("x", -w + 10);
+  a.text.setAttribute("x", -w / 2 + 10);
+  a.bubble.classList.add("show");
+  clearTimeout(a.bubbleTimer);
+  a.bubbleTimer = setTimeout(() => a.bubble.classList.remove("show"), ms || 4200);
+}
+function floatText(x, y, text, color) {
+  const t = svg("text", { x, y, class: "floaty", "text-anchor": "middle", fill: color || "var(--ink)" }, text);
+  layer.sprites.append(t); setTimeout(() => t.remove(), 2500);
 }
 const timers = new Map();
 function pulse(elm, cls, ms) {
@@ -325,34 +467,80 @@ function pulse(elm, cls, ms) {
   timers.set(elm, setTimeout(() => elm.classList.remove(cls), ms));
 }
 function pulseEdges(...ids) { for (const id of ids) pulse(edgeEls[id], "pulse", 2600); }
+const center = (id) => ({ x: NODES[id].x + NODE_W / 2, y: NODES[id].y - 6 });
+
+// --- what each kind of event looks like
+const TOOL_SAY = { web_search: "searching the web", fetch_page: "reading a job page", tracker_search: "checking the tracker",
+  tracker_get: "opening a record", tracker_upsert: "saving to the tracker", get_resume: "picking a resume",
+  email_send: "writing the email", email_draft: "drafting an email" };
+const JOB_SAY = { daily_search: "starting the search", apply_queue: "checking the queue", follow_up_check: "looking for follow-ups",
+  no_response: "closing old ones", daily_summary: "writing the summary", weekly_summary: "writing the summary" };
 
 function reactToEvent(ev) {
-  const s = ev.summary || "", tool = ev.data && ev.data.tool, job = ev.data && ev.data.job;
-  const isTracker = tool && tool.startsWith("tracker_");
-  if (isTracker) pulse(nodeEls.tracker, "flash", 1600);
-  switch (ev.agent) {
+  const id = ev.agent, data = ev.data || {}, tool = data.tool, s = ev.summary || "";
+  if (ev.type === "llm") { say(id, "thinking…"); return; }
+  if (ev.type === "run_start") { say(id, "on it…"); return; }
+  if (ev.type === "run_end") { say(id, data.ok === false ? "that failed ✕" : "done ✓", 3200); return; }
+  if (ev.type === "error") { say(id, "problem: " + s.replace(/^[^:]*:\s*/, ""), 6000); return; }
+
+  if (ev.type === "tool") {
+    say(id, TOOL_SAY[tool] || tool || "working");
+    const isTracker = tool && tool.startsWith("tracker_");
+    if (isTracker) pulse(nodeEls.tracker, "flash", 1600);
+    if (tool === "tracker_upsert") {
+      if (id === "agent1") trip("agent1", "e_a1_tracker");
+      if (id === "agent3") trip("agent3", "e_a3_tracker");
+      if (id === "agent2") trip("agent2", "e_tracker_a2", { reverse: true });
+    }
+    if (id === "agent2" && tool && tool.startsWith("email_")) { trip("agent2", "e_a2_mailer", { hold: 700 }); packet("e_a2_mailer", "✉", { color: "var(--c-agent2)", delay: 500 }); }
+    return;
+  }
+  if (ev.type === "tool_result") {
+    const m = /saved (APP-\d+) \(([^)]+)\)/.exec(s);
+    if (m) { const c = center("tracker"); floatText(c.x, c.y, `${m[1]} · ${m[2]}`, "var(--ink)"); pulse(nodeEls.tracker, "flash", 1600); }
+    return;
+  }
+
+  switch (id) {
     case "scheduler":
       if (ev.type === "job_start") {
-        if (job === "daily_search") pulseEdges("e_sched_a1");
-        else pulseEdges("e_sched_a2");
+        const job = data.job;
+        say("scheduler", JOB_SAY[job] || "starting a job");
+        packet(job === "daily_search" ? "e_sched_a1" : "e_sched_a2", "▶", { color: "var(--c-scheduler)" });
+        pulseEdges(job === "daily_search" ? "e_sched_a1" : "e_sched_a2");
       }
       break;
-    case "agent1": if (isTracker && ev.type === "tool") pulseEdges("e_a1_tracker"); break;
-    case "agent3": if (isTracker && ev.type === "tool") pulseEdges("e_a3_tracker"); break;
-    case "agent2":
-      if (ev.type === "run_start") pulseEdges("e_tracker_a2");
-      if (tool && tool.startsWith("email_")) pulseEdges("e_a2_mailer");
+    case "mailer":
+      if (ev.type === "email" && s.startsWith("Staged")) {
+        say("mailer", "email ready for you"); packet("e_mailer_notifier", "✉", { color: "var(--c-mailer)" }); pulseEdges("e_mailer_notifier");
+      } else if (ev.type === "email") {
+        say("mailer", "sent ✉"); packet("e_mailer_employer", "✉", { color: "var(--c-mailer)" }); pulseEdges("e_mailer_employer");
+        const c = center("employer");
+        setTimeout(() => { floatText(c.x, c.y + 6, "✉ delivered", "var(--good)"); pulse(nodeEls.employer, "flash", 2200); }, 1500);
+      }
       break;
-    case "mailer": if (ev.type === "email" && s.startsWith("Staged")) pulseEdges("e_mailer_notifier"); break;
-    case "notifier": if (ev.type === "notification") { pulseEdges("e_notifier_you"); pulse(nodeEls.you, "flash", 2000); } break;
+    case "notifier":
+      if (ev.type === "notification") {
+        say("notifier", "messaging you"); packet("e_notifier_you", "✉", { color: "var(--c-notifier)" });
+        pulseEdges("e_notifier_you"); pulse(nodeEls.you, "flash", 2200);
+      }
+      break;
     case "poller":
       if (ev.type === "message_in") {
-        pulse(nodeEls.you, "flash", 2000); pulseEdges("e_you_poller");
-        pulseEdges(s.includes("send") ? "e_poller_mailer" : "e_poller_a3");
+        say("poller", "heard you"); pulse(nodeEls.you, "flash", 1800);
+        packet("e_you_poller", "✎", { color: "var(--c-poller)" }); pulseEdges("e_you_poller");
+        const next = s.includes("send") ? "e_poller_mailer" : "e_poller_a3";
+        packet(next, "✎", { color: "var(--c-poller)", delay: 800 }); setTimeout(() => pulseEdges(next), 800);
+      } else if (ev.type === "message_out") {
+        say("poller", "replied"); packet("e_you_poller", "✉", { reverse: true, color: "var(--c-poller)" });
       }
       break;
   }
 }
+// events often arrive in bursts; play them one after another so the motion stays readable
+const visualQueue = [];
+function queueVisual(ev) { visualQueue.push(ev); if (visualQueue.length > 40) visualQueue.splice(0, visualQueue.length - 40); }
+setInterval(() => { const ev = visualQueue.shift(); if (ev) reactToEvent(ev); }, 320);
 
 // ---------- rendering
 let latest = null;
@@ -406,6 +594,12 @@ function renderAgents(st) {
     n.classList.toggle("working", a.status === "working");
     n.classList.toggle("error", a.status === "error");
     n.classList.toggle("offline", a.online === false);
+    const bot = avatars[name];
+    if (bot) {
+      const mood = a.online === false ? "offline" : a.status === "working" ? "working" : a.status === "error" ? "error" : "idle";
+      for (const m of ["idle", "working", "error", "offline"]) bot.g.classList.toggle(m, m === mood);
+      bot.badge.textContent = mood === "error" ? "✕" : mood === "offline" ? "z" : "";
+    }
   }
   $("trackerCount").textContent = st.records.length + " jobs";
 }
@@ -483,7 +677,7 @@ function ingest(events) {
   const prev = lastId;
   for (const ev of events) { feedEvents.push(ev); lastId = Math.max(lastId, ev.id); }
   if (feedEvents.length > 600) feedEvents.splice(0, feedEvents.length - 600);
-  if (feedLoaded) events.forEach(reactToEvent);
+  if (feedLoaded) events.forEach(queueVisual);
   renderFeed(feedLoaded ? prev : null);
   if (!feedLoaded) feedLoaded = true;
 }
