@@ -30,7 +30,13 @@ import tools
 import tracker
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
-INDEX_PATH = os.path.join(_DIR, "dashboard", "index.html")
+# The only files the server will hand out (a fixed list, so no path can reach anything else).
+STATIC_FILES = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/workspace.js": ("workspace.js", "application/javascript; charset=utf-8"),
+    "/workspace.css": ("workspace.css", "text/css; charset=utf-8"),
+}
 
 WORKING_RUN_MAX_AGE = timedelta(minutes=30)   # an unfinished run older than this is treated as dead
 ERROR_SHOWN_FOR = timedelta(minutes=10)
@@ -222,9 +228,10 @@ def make_handler(source, port: int):
                 return
             url = urlparse(self.path)
             try:
-                if url.path in ("/", "/index.html"):
-                    with open(INDEX_PATH, "rb") as f:
-                        self._send(200, f.read(), "text/html; charset=utf-8")
+                if url.path in STATIC_FILES:
+                    name, content_type = STATIC_FILES[url.path]
+                    with open(os.path.join(_DIR, "dashboard", name), "rb") as f:
+                        self._send(200, f.read(), content_type)
                 elif url.path == "/api/state":
                     self._json(build_state(source))
                 elif url.path == "/api/events":
