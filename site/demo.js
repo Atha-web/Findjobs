@@ -31,7 +31,7 @@
   const feedEl = () => document.getElementById("feed");
   function addToFeed(ev) {
     const list = feedEl(); if (!list) return;
-    const time = new Date(ev.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const time = new Date(ev.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
     const li = document.createElement("li");
     li.className = "fresh";
     const when = document.createElement("span"); when.className = "when"; when.textContent = time;
