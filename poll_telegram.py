@@ -308,6 +308,7 @@ def main() -> None:
           f"(Ctrl+C to stop)...")
     try:
         while True:
+            events.heartbeat("poller")
             try:
                 config = poll_once(config)
             except (requests.exceptions.RequestException, RuntimeError) as exc:

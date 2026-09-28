@@ -461,6 +461,7 @@ def main() -> None:
                 log("Scheduler started (Ctrl+C to stop).")
             while True:
                 config = common.load_config()  # re-read each tick: PAUSED / MODE can change
+                events.heartbeat("scheduler")
                 run_due_jobs(config)
                 if args.once:
                     return
