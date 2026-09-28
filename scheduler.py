@@ -35,6 +35,7 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import agent_common as common
+import events
 import filelock
 import notifier
 import tools
@@ -341,6 +342,33 @@ def is_due(name: str, config: dict, state: dict, now: datetime) -> bool:
     return True
 
 
+def next_run(name: str, config: dict, state: dict, now: datetime) -> datetime | None:
+    """When a job will next run (or `now` if it is due already). None if it can't run again today."""
+    _, schedule, _ = JOBS[name]
+    kind, key = schedule.split(":")
+    job_state = state.get(name, {})
+
+    if kind == "every":
+        last = job_state.get("last_run")
+        if not last:
+            return now
+        return max(now, datetime.fromisoformat(last) + timedelta(minutes=float(_cfg(config, key))))
+
+    hour, minute = _parse_time(_cfg(config, key))
+    weekly_day = str(_cfg(config, "WEEKLY_SUMMARY_DAY")).lower()
+    for offset in range(0, 8):
+        day = (now + timedelta(days=offset)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if kind == "weekly" and day.strftime("%A").lower() != weekly_day:
+            continue
+        if offset == 0 and job_state.get("done_date") == day.date().isoformat():
+            continue
+        if offset == 0 and job_state.get("attempts", 0) >= MAX_ATTEMPTS_PER_DAY \
+                and job_state.get("attempt_date") == day.date().isoformat():
+            continue
+        return max(now, day) if day.date() == now.date() else day
+    return None
+
+
 def run_job(name: str, config: dict, force: bool = False) -> bool:
     """Runs one job and records the outcome. Returns True on success."""
     func, schedule, skip_when_paused = JOBS[name]
@@ -351,6 +379,7 @@ def run_job(name: str, config: dict, force: bool = False) -> bool:
 
     if skip_when_paused and config.get("PAUSED") and not force:
         log(f"{name}: skipped (PAUSED)")
+        events.emit("scheduler", "job_end", f"{name}: skipped (system is paused)", job=name, ok=True)
         if schedule.startswith("daily"):
             job_state["done_date"] = today  # don't keep re-checking all day
         job_state["last_run"] = now.isoformat(timespec="seconds")
@@ -362,12 +391,15 @@ def run_job(name: str, config: dict, force: bool = False) -> bool:
     job_state["attempts"] = job_state.get("attempts", 0) + 1
     job_state["last_run"] = now.isoformat(timespec="seconds")
     log(f"{name}: starting (attempt {job_state['attempts']})")
+    events.emit("scheduler", "job_start", f"{name}: starting (attempt {job_state['attempts']})", job=name)
     try:
         result = func(config)
     except Exception as exc:  # noqa: BLE001 - one failing job must never stop the scheduler
         job_state["last_error"] = str(exc)[:500]
         job_state["retry_at"] = (now + timedelta(minutes=RETRY_AFTER_MINUTES)).isoformat(timespec="seconds")
         log(f"{name}: FAILED - {exc}")
+        events.emit("scheduler", "error", f"{name} failed: {str(exc)[:150]}", job=name)
+        events.emit("scheduler", "job_end", f"{name}: failed", job=name, ok=False)
         if job_state["attempts"] >= MAX_ATTEMPTS_PER_DAY or schedule.startswith("every"):
             if job_state.get("alerted_date") != today:
                 job_state["alerted_date"] = today
@@ -380,6 +412,7 @@ def run_job(name: str, config: dict, force: bool = False) -> bool:
     job_state["done_date"] = today
     job_state["last_result"] = result
     log(f"{name}: done - {result}")
+    events.emit("scheduler", "job_end", f"{name}: {result}", job=name, ok=True)
     _save_state({**_load_state(), name: job_state})
     return True
 
