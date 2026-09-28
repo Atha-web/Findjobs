@@ -163,20 +163,37 @@ def _to_openai_tools(tools: list[dict]) -> list[dict]:
 
 
 DEFAULT_FALLBACK_MODELS = "gemini-3.7-flash,gemini-3.5-flash,gemini-3.1-flash-lite"
+CONNECT_TIMEOUT = 10
+READ_TIMEOUT = 90          # a single model call that has produced nothing for this long is treated as hung
+CALL_BUDGET_SECONDS = 300  # ...and one logical call (all its retries and fallbacks) never takes longer than this
 
 
 def _chat_completion(payload: dict) -> dict:
-    """POSTs to /chat/completions. On rate limits or overload, retries with a short backoff,
-    then falls back through LLM_FALLBACK_MODELS (comma-separated; set it empty to disable)."""
+    """
+    POSTs to /chat/completions. Server overload or rate limits, and calls that hang or drop the
+    connection, are retried with a short backoff and then handed to the next model in
+    LLM_FALLBACK_MODELS (comma-separated; set it empty to disable). The whole call is capped at
+    CALL_BUDGET_SECONDS so one stuck request can't stall a run for many minutes.
+    """
     base_url = os.environ.get("LLM_BASE_URL", DEFAULT_LLM_BASE_URL).rstrip("/")
     headers = {"Authorization": f"Bearer {require_api_key()}"}
     fallbacks = os.environ.get("LLM_FALLBACK_MODELS", DEFAULT_FALLBACK_MODELS)
     models = [payload["model"]] + [m.strip() for m in fallbacks.split(",") if m.strip()]
+    deadline = time.monotonic() + CALL_BUDGET_SECONDS
     last_error = "no models tried"
     for model in models:
         for attempt in range(3):
-            resp = requests.post(base_url + "/chat/completions",
-                                 json={**payload, "model": model}, headers=headers, timeout=120)
+            if time.monotonic() > deadline:
+                raise RuntimeError(f"LLM call gave up after {CALL_BUDGET_SECONDS}s. Last error: {last_error}")
+            try:
+                resp = requests.post(base_url + "/chat/completions", json={**payload, "model": model},
+                                     headers=headers, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+                last_error = f"{model}: {type(exc).__name__}"
+                if attempt < 1:            # one quick retry, then try the next model
+                    time.sleep(3)
+                    continue
+                break
             if resp.ok:
                 return resp.json()
             last_error = f"{model}: {resp.status_code} {resp.text[:300]}"
@@ -192,6 +209,13 @@ def _chat_completion(payload: dict) -> dict:
     raise RuntimeError(f"LLM request failed on all models. Last error: {last_error}")
 
 
+PARALLEL_HINT = (
+    "\n\nTool use: when several tool calls do not depend on each other (for example several searches, "
+    "or fetching several pages), request them together in a single turn instead of one per turn. "
+    "That keeps the number of turns down."
+)
+
+
 def _run_tool_loop_openai(
     system_prompt: str,
     tools: list[dict],
@@ -203,7 +227,7 @@ def _run_tool_loop_openai(
     """Same loop as the Anthropic one, over an OpenAI-compatible /chat/completions API."""
     oa_tools = _to_openai_tools(tools)
     messages = [
-        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": system_prompt + PARALLEL_HINT},
         {"role": "user", "content": user_content},
     ]
 
