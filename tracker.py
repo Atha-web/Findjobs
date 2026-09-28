@@ -11,6 +11,12 @@ manual-review build stage. Exposes exactly the three tracker tools every agent g
 Code, not the agents, is responsible for: assigning Application IDs, appending history,
 refusing deletes, and enforcing that status never moves backwards. There is deliberately
 no delete function.
+
+Config limits enforced here (not just in the prompts): MAX_NEW_MATCHES_PER_DAY,
+MATCH_THRESHOLD_RECOMMEND, MAX_POSTING_AGE_DAYS (when creating a Discovered record),
+MAX_APPLICATIONS_PER_DAY, MAX_APPS_PER_COMPANY_30_DAYS (when a record is queued to apply or
+sent) and MAX_FOLLOW_UPS. EXPERIENCE_GAP_MAX_YEARS and MAX_FORM_PAGES have no structured
+field to check, so they stay with the agents.
 """
 
 from __future__ import annotations
@@ -18,11 +24,11 @@ from __future__ import annotations
 import json
 import os
 import re
-import threading
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
-_LOCK = threading.Lock()
+import filelock
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(_DIR, "data", "tracker.json")
@@ -43,6 +49,8 @@ PIPELINE_ORDER = [
 ]
 TERMINAL_STATUSES = {"Rejected", "Withdrawn", "Closed", "Skipped", "No Response"}
 ALL_STATUSES = set(PIPELINE_ORDER) | TERMINAL_STATUSES
+QUEUED_STATUSES = {"Ready to Apply", "Application Started"}
+APPLIED_OR_LATER = set(PIPELINE_ORDER[PIPELINE_ORDER.index("Applied"):])
 
 RECORD_FIELDS = [
     "application_id", "fingerprint", "company", "company_normalized", "role",
@@ -123,10 +131,123 @@ def _matches(record: dict, filters: dict) -> bool:
     return True
 
 
+def _today(config: dict) -> str:
+    if config.get("today"):
+        return config["today"]
+    try:
+        return datetime.now(ZoneInfo(config["TIMEZONE"])).strftime("%Y-%m-%d")
+    except Exception:  # noqa: BLE001 - no/invalid timezone: fall back to local time
+        return datetime.now().strftime("%Y-%m-%d")
+
+
+def _parse_date(value):
+    try:
+        return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+
+
+def _score_value(value):
+    if isinstance(value, dict):
+        value = value.get("total")
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def _check_discovery_rules(record: dict, config: dict) -> None:
+    """Refuses to create a Discovered record that the config says should not be recommended."""
+    threshold = config.get("MATCH_THRESHOLD_RECOMMEND")
+    score = _score_value(record.get("match_score"))
+    if threshold is not None and score is not None and score < threshold:
+        raise TrackerError(
+            f"match_score {score} is below MATCH_THRESHOLD_RECOMMEND ({threshold}); "
+            "create it with status Skipped instead."
+        )
+    max_age = config.get("MAX_POSTING_AGE_DAYS")
+    posted = _parse_date(record.get("date_posted"))
+    today = _parse_date(_today(config))
+    if max_age is not None and posted and today and (today - posted).days > max_age:
+        raise TrackerError(
+            f"Posting is {(today - posted).days} days old, over MAX_POSTING_AGE_DAYS "
+            f"({max_age}); create it with status Skipped instead."
+        )
+
+
+def _check_application_caps(data: dict, app_id: str | None, record: dict, config: dict,
+                            include_queued: bool) -> None:
+    """
+    MAX_APPLICATIONS_PER_DAY and MAX_APPS_PER_COMPANY_30_DAYS. `include_queued` also counts
+    other records already waiting to be applied to (used when a record is first queued).
+    """
+    today = _parse_date(_today(config))
+    others = [r for r in data.values() if r.get("application_id") != app_id]
+
+    per_day = config.get("MAX_APPLICATIONS_PER_DAY")
+    if per_day is not None:
+        used = sum(1 for r in others if _parse_date(r.get("date_applied")) == today)
+        queued = sum(1 for r in others if r.get("status") in QUEUED_STATUSES) if include_queued else 0
+        if used + queued >= per_day:
+            raise TrackerError(
+                f"MAX_APPLICATIONS_PER_DAY ({per_day}) reached for today "
+                f"({used} applied, {queued} already queued). Try again tomorrow."
+            )
+
+    per_company = config.get("MAX_APPS_PER_COMPANY_30_DAYS")
+    company = record.get("company_normalized")
+    if per_company is not None and company:
+        count = 0
+        for r in others:
+            if r.get("company_normalized") != company:
+                continue
+            applied = _parse_date(r.get("date_applied"))
+            recent = applied is not None and today is not None and 0 <= (today - applied).days < 30
+            if recent or (include_queued and r.get("status") in QUEUED_STATUSES):
+                count += 1
+        if count >= per_company:
+            raise TrackerError(
+                f"MAX_APPS_PER_COMPANY_30_DAYS ({per_company}) reached for "
+                f"{record.get('company') or company}."
+            )
+
+
+def check_can_send(application_id: str, kind: str, config: dict) -> dict | None:
+    """
+    Last check before an email actually goes out. Raises TrackerError if the record's state
+    doesn't allow this kind of email. Returns the record (None if the email isn't tied to a
+    tracker record).
+
+    apply:     not already applied or closed, and the daily / per-company caps aren't reached.
+    follow_up: status Applied, MAX_FOLLOW_UPS not reached, recruiter email verified.
+    withdraw:  the application is still open.
+    draft:     any other staged email; no status rules.
+    """
+    with filelock.locked("tracker"):
+        data = _load()
+        record = data.get(application_id)
+        if record is None:
+            return None
+        status = record.get("status")
+        if kind == "follow_up":
+            if status != "Applied":
+                raise TrackerError(f"{application_id} is {status!r}, not Applied; no follow-up to send.")
+            cap = config.get("MAX_FOLLOW_UPS")
+            if cap is not None and (record.get("follow_ups_sent") or 0) >= cap:
+                raise TrackerError(f"MAX_FOLLOW_UPS ({cap}) already reached for {application_id}.")
+            if not record.get("recruiter_email_verified"):
+                raise TrackerError(f"The recruiter email for {application_id} isn't verified; not sending.")
+        elif kind == "withdraw":
+            if status in TERMINAL_STATUSES:
+                raise TrackerError(f"{application_id} is already {status!r}; nothing to withdraw.")
+        elif kind == "apply":
+            if status in TERMINAL_STATUSES or status in APPLIED_OR_LATER:
+                raise TrackerError(f"{application_id} is already {status!r}; not sending another application.")
+            _check_application_caps(data, application_id, record, config, include_queued=False)
+        return record
+
+
 def tracker_search(filters: dict[str, Any] | None = None) -> list[dict]:
     """Find records by any combination of id, fingerprint, url, company, role, status, etc."""
     filters = filters or {}
-    with _LOCK:
+    with filelock.locked("tracker"):
         data = _load()
     results = [r for r in data.values() if _matches(r, filters)]
     results.sort(key=lambda r: r.get("last_update") or "", reverse=True)
@@ -135,7 +256,7 @@ def tracker_search(filters: dict[str, Any] | None = None) -> list[dict]:
 
 def tracker_get(application_id: str) -> dict:
     """Read one record with its full history. Raises TrackerError if it doesn't exist."""
-    with _LOCK:
+    with filelock.locked("tracker"):
         data = _load()
     record = data.get(application_id)
     if record is None:
@@ -175,7 +296,7 @@ def tracker_upsert(record: dict[str, Any], config: dict[str, Any] | None = None)
     - If `config` is given, enforces MAX_NEW_MATCHES_PER_DAY for new Discovered records.
     """
     config = config or {}
-    with _LOCK:
+    with filelock.locked("tracker"):
         data = _load()
         app_id = record.get("application_id")
 
@@ -189,14 +310,22 @@ def tracker_upsert(record: dict[str, Any], config: dict[str, Any] | None = None)
                             f"({existing['application_id']}). Upsert that application_id "
                             "to merge instead of creating a duplicate."
                         )
-            new_status = record.get("status")
+            new_status = record.get("status") or "Discovered"
+            if new_status not in ALL_STATUSES:
+                raise TrackerError(f"Unknown status {new_status!r}")
+            record = {**record, "status": new_status}
             if new_status == "Discovered":
+                today = _today(config)
+                record.setdefault("date_found", today)
+                _check_discovery_rules(record, config)
                 cap = config.get("MAX_NEW_MATCHES_PER_DAY")
                 if cap is not None:
-                    today = config.get("today") or datetime.now().strftime("%Y-%m-%d")
+                    # Count by how the record was created, so moving a match on to Awaiting
+                    # Approval / Skipped doesn't free up room for more.
                     today_count = sum(
                         1 for r in data.values()
-                        if r.get("date_found") == today and r.get("status") == "Discovered"
+                        if r.get("date_found") == today
+                        and (r.get("history") or [{}])[0].get("status") == "Discovered"
                     )
                     if today_count >= cap:
                         raise TrackerError(
@@ -225,6 +354,22 @@ def tracker_upsert(record: dict[str, Any], config: dict[str, Any] | None = None)
 
         new_status = record.get("status", existing.get("status"))
         _validate_status_transition(existing.get("status"), new_status)
+
+        if "follow_ups_sent" in record:
+            new_count, old_count = record["follow_ups_sent"], existing.get("follow_ups_sent") or 0
+            if not isinstance(new_count, int) or isinstance(new_count, bool) or new_count < old_count:
+                raise TrackerError("follow_ups_sent can only increase.")
+            max_follow_ups = config.get("MAX_FOLLOW_UPS")
+            if max_follow_ups is not None and new_count > max_follow_ups:
+                raise TrackerError(f"MAX_FOLLOW_UPS ({max_follow_ups}) already reached.")
+
+        old_status = existing.get("status")
+        if new_status != old_status and new_status in QUEUED_STATUSES:
+            probe = {**existing, **{k: v for k, v in record.items() if k in RECORD_FIELDS}}
+            _check_application_caps(
+                data, app_id, probe, config,
+                include_queued=(old_status not in QUEUED_STATUSES and new_status == "Ready to Apply"),
+            )
 
         changed_fields = []
         for key, value in record.items():
