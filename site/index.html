@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agents at Work</title>
+<meta name="description" content="A live-style demo of a job-application agent system: robots working in an office as agents search, track, write and send. All data is made up.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='9' width='20' height='18' rx='6' fill='%232a78d6'/%3E%3Crect x='9' y='13' width='14' height='9' rx='4' fill='%23fff'/%3E%3Ccircle cx='13' cy='17' r='1.7'/%3E%3Ccircle cx='19' cy='17' r='1.7'/%3E%3Cline x1='16' y1='9' x2='16' y2='4' stroke='%232a78d6' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="workspace.css">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f3f2ee; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #6f6d67;
+    --line: #e1e0d9; --line-strong: #c3c2b7; --ring: rgba(11, 11, 11, 0.10);
+    --accent: #2a78d6; --accent-soft: rgba(42, 120, 214, 0.12);
+    --c-agent1: #2a78d6; --c-agent2: #eb6834; --c-agent3: #1baf7a; --c-scheduler: #eda100;
+    --c-poller: #e87ba4; --c-notifier: #008300; --c-mailer: #4a3aa7;
+    --good: #006300; --warning: #9a6700; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #a3a198;
+      --line: #2c2c2a; --line-strong: #383835; --ring: rgba(255, 255, 255, 0.10);
+      --accent: #3987e5; --accent-soft: rgba(57, 135, 229, 0.18);
+      --c-agent1: #3987e5; --c-agent2: #d95926; --c-agent3: #199e70; --c-scheduler: #c98500;
+      --c-poller: #d55181; --c-notifier: #008300; --c-mailer: #9085e9;
+      --good: #0ca30c; --warning: #fab219; --critical: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #a3a198;
+    --line: #2c2c2a; --line-strong: #383835; --ring: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5; --accent-soft: rgba(57, 135, 229, 0.18);
+    --c-agent1: #3987e5; --c-agent2: #d95926; --c-agent3: #199e70; --c-scheduler: #c98500;
+    --c-poller: #d55181; --c-notifier: #008300; --c-mailer: #9085e9;
+    --good: #0ca30c; --warning: #fab219; --critical: #e66767;
+  }
+
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--page); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 0 16px 40px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  header { padding: 26px 0 14px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .lede { color: var(--ink-2); max-width: 70ch; margin: 0; }
+  h2 { font-size: 13px; margin: 0; color: var(--ink-2); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+  .banner { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 12px; margin: 14px 0; }
+  .panel { min-width: 0; background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 14px 16px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  @media (max-width: 980px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 10px; }
+  .head .spacer { flex: 1; }
+  button.ctl, select.ctl { font: inherit; font-size: 12px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  button.ctl:hover { background: var(--surface-2); }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .flowwrap { overflow-x: auto; }
+  .caption { color: var(--ink-3); font-size: 12px; margin: 8px 2px 0; }
+
+  #feed { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow-y: auto; }
+  #feed li { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; padding: 6px 2px; border-top: 1px solid var(--line); }
+  #feed li:first-child { border-top: 0; }
+  #feed li.fresh { animation: fresh 1.6s ease-out; }
+  @keyframes fresh { from { background: var(--accent-soft); } to { background: transparent; } }
+  .when { color: var(--ink-3); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+  .who { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; margin-right: 6px; }
+  .sw { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .what { color: var(--ink-2); overflow-wrap: anywhere; }
+  .what.err { color: var(--critical); }
+
+  .legend { display: grid; gap: 10px 16px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); margin: 0; padding: 0; list-style: none; }
+  .legend li { display: flex; gap: 10px; align-items: flex-start; }
+  .legend .sw { width: 12px; height: 12px; margin-top: 4px; }
+  .legend b { display: block; }
+  .legend span { color: var(--ink-3); font-size: 12.5px; }
+  footer { color: var(--ink-3); font-size: 12px; margin-top: 18px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Agents at Work</h1>
+    <p class="lede">A job-application assistant made of small AI agents. One finds and scores jobs, one writes applications, one keeps track of replies, and a scheduler keeps them on time. Here they are as robots in an office: watch them walk to the filing cabinets, hand each other envelopes and send an application.</p>
+  </header>
+  <div class="banner">This is a demo. Every company and event is made up and plays in a loop; nothing here is connected to real applications.</div>
+
+  <section class="grid">
+    <div class="panel">
+      <div class="head">
+        <h2>The office</h2>
+        <span class="spacer"></span>
+        <button class="ctl" id="pause" type="button">Pause</button>
+        <select class="ctl" id="speed" aria-label="Playback speed"><option value="1">Normal speed</option><option value="2">2x faster</option><option value="3">3x faster</option></select>
+        <button class="ctl" id="theme" type="button" aria-label="Change colour theme">Theme: auto</button>
+      </div>
+      <div class="flowwrap"><svg id="space" viewBox="-40 0 1040 545" role="img" aria-label="A two-storey office where each agent is a robot at its desk. Robots walk between rooms as they work."></svg></div>
+      <p class="caption">Each robot sits at its own desk. When it saves to the tracker it walks to the records cabinets, and emails travel through the mailroom and down the tube to the Employer inbox.</p>
+    </div>
+    <div class="panel">
+      <div class="head"><h2>What's happening</h2></div>
+      <ul id="feed" role="log" aria-live="off"></ul>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:14px">
+    <div class="head"><h2>Who's who</h2></div>
+    <ul class="legend">
+      <li><span class="sw" style="background:var(--c-scheduler)"></span><div><b>Scheduler</b><span>Starts the daily jobs on time.</span></div></li>
+      <li><span class="sw" style="background:var(--c-agent1)"></span><div><b>Research</b><span>Finds jobs, checks they're real and scores how well they fit.</span></div></li>
+      <li><span class="sw" style="background:var(--c-agent2)"></span><div><b>Application</b><span>Writes the application and prepares the email.</span></div></li>
+      <li><span class="sw" style="background:var(--c-agent3)"></span><div><b>Tracking</b><span>Understands your replies and keeps every job's status up to date.</span></div></li>
+      <li><span class="sw" style="background:var(--c-poller)"></span><div><b>Telegram listener</b><span>Receives your messages and passes them to the right desk.</span></div></li>
+      <li><span class="sw" style="background:var(--c-notifier)"></span><div><b>Notifier</b><span>Sends you updates and approval requests.</span></div></li>
+      <li><span class="sw" style="background:var(--c-mailer)"></span><div><b>Mailer</b><span>Holds emails until you approve them, then sends them.</span></div></li>
+    </ul>
+  </section>
+  <footer>Nothing is sent from this page and it makes no network requests after loading.</footer>
+</div>
+
+<script src="workspace.js"></script>
+<script src="demo.js"></script>
+<script>
+"use strict";
+window.Workspace.init(document.getElementById("space"));
+
+const pauseBtn = document.getElementById("pause");
+pauseBtn.addEventListener("click", () => { pauseBtn.textContent = window.Demo.togglePause() ? "Play" : "Pause"; });
+document.getElementById("speed").addEventListener("change", (e) => window.Demo.setSpeed(Number(e.target.value)));
+
+const modes = ["auto", "light", "dark"], themeBtn = document.getElementById("theme");
+let mode = "auto";
+try { mode = localStorage.getItem("agents-theme") || "auto"; } catch (e) {}
+const fromLink = new URLSearchParams(location.search).get("theme");   // e.g. ?theme=dark
+if (modes.includes(fromLink)) mode = fromLink;
+function applyTheme() {
+  if (mode === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", mode);
+  themeBtn.textContent = "Theme: " + mode;
+}
+themeBtn.addEventListener("click", () => {
+  mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+  try { localStorage.setItem("agents-theme", mode); } catch (e) {}
+  applyTheme();
+});
+applyTheme();
+
+setTimeout(() => window.Demo.start(), 700);
+</script>
+</body>
+</html>
