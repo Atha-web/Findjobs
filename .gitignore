@@ -6,3 +6,5 @@ data/events.jsonl
 data/events.jsonl.tmp
 data/heartbeat_*.json
 data/heartbeat_*.json.tmp
+data/scheduler_state.json
+data/scheduler_state.json.tmp
