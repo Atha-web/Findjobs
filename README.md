@@ -154,6 +154,10 @@ Try it without running anything: `python dashboard.py --demo` replays a made-up 
 
 It is read-only and listens on 127.0.0.1 only, so other computers can't see it. Activity is logged to `data/events.jsonl` (git-ignored). Each entry is a short line: the agent, what it did, and the application ID. Emails, cover letters and the text of your messages are not logged.
 
+### Hosted demo
+
+`site/` is a static, self-contained copy of the Workspace that plays a made-up day, ready to deploy to Vercel (or any static host). It contains no real data and makes no network requests. See `site/README.md`. If you change `dashboard/workspace.js` or `workspace.css`, run `python site/sync.py` so the demo uses the same scene.
+
 ### Commands you can type in Telegram
 
 | You type | What happens |
