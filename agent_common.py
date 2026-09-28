@@ -169,7 +169,7 @@ READ_TIMEOUT = 90          # a single model call that has produced nothing for t
 CALL_BUDGET_SECONDS = 300  # ...and one logical call (all its retries and fallbacks) never takes longer than this
 
 
-BAD_MODEL_SECONDS = 600    # after a model fails every retry, skip it for this long
+BAD_MODEL_SECONDS = 1800   # after a model fails every retry, skip it for this long
 _HEALTH_PATH = os.path.join(_DIR, "data", "llm_health.json")
 
 
