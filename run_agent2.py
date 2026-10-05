@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 import agent_common as common
 import notifier
@@ -189,9 +190,12 @@ def main() -> None:
         parsed = common.parse_agent_json(final_text)
         note = parsed.get("notification")
         if note and note.get("template"):
+            variables = note.get("variables", [])
+            if note["template"] == "manual_submit":
+                variables = manual_submit_variables(parsed)
             result = notifier.send_notification(
                 template=note["template"],
-                variables=note.get("variables", []),
+                variables=variables,
                 application_id=parsed.get("application_id"),
                 config=config,
                 urgent=note.get("urgent", False),
@@ -202,6 +206,28 @@ def main() -> None:
                 print(f"Notification logged but not delivered: {result['reason']}")
     except (json.JSONDecodeError, AttributeError):
         pass
+    except (IndexError, KeyError, ValueError) as exc:
+        print(f"Notification skipped, the model's variables didn't fit the template: {exc!r}")
+
+
+def manual_submit_variables(parsed: dict) -> list:
+    """
+    The manual_submit template's four values, built here because the model tends to return
+    only role and company. The cover letter and steps go to data/manual_packs/<id>.md.
+    """
+    app_id = parsed.get("application_id")
+    record = tracker.tracker_get(app_id)
+    pack = parsed.get("manual_pack") or {}
+    apply_url = pack.get("apply_url") or next(iter(record.get("job_urls") or []), "-")
+
+    pack_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "manual_packs")
+    os.makedirs(pack_dir, exist_ok=True)
+    pack_path = os.path.join(pack_dir, f"{app_id}.md")
+    with open(pack_path, "w", encoding="utf-8") as fh:
+        fh.write(f"# {record.get('role')} at {record.get('company')}\n\nApply: {apply_url}\n\n")
+        fh.write("## Cover letter\n\n" + (parsed.get("cover_letter_text") or "-") + "\n\n")
+        fh.write("## Pack\n\n```json\n" + json.dumps(pack, indent=2) + "\n```\n")
+    return [record.get("role"), record.get("company"), apply_url, pack_path]
 
 
 if __name__ == "__main__":
