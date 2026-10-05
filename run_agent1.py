@@ -132,7 +132,7 @@ def main() -> None:
     print(f"\nSaved output to {out_path}")
 
     try:
-        parsed = json.loads(final_text)
+        parsed = common.parse_agent_json(final_text)
     except json.JSONDecodeError:
         print("Could not parse Agent 1's output as JSON; skipping the notify/promote step.")
         return

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -366,6 +367,13 @@ def run_tool_loop(
         raise
     emit("run_end", "Finished", ok=True)
     return text
+
+
+def parse_agent_json(text: str) -> Any:
+    """json.loads that tolerates a model wrapping its answer in a ```json fenced block."""
+    text = text.strip()
+    match = re.match(r"^```[a-zA-Z]*\s*\n(.*?)\n?```\s*$", text, re.DOTALL)
+    return json.loads(match.group(1) if match else text)
 
 
 def save_run(agent_name: str, date_str: str, text: str) -> str:

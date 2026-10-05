@@ -125,7 +125,7 @@ def run(mode: str, *, text: str | None = None, quoted_application_id: str | None
     )
 
     common.save_run("agent3", today_date, final_text)
-    return json.loads(final_text)
+    return common.parse_agent_json(final_text)
 
 
 def main() -> None:

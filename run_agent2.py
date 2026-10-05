@@ -186,7 +186,7 @@ def main() -> None:
     print(f"\nSaved output to {out_path}")
 
     try:
-        parsed = json.loads(final_text)
+        parsed = common.parse_agent_json(final_text)
         note = parsed.get("notification")
         if note and note.get("template"):
             result = notifier.send_notification(
