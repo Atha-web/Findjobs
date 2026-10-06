@@ -1,0 +1,11 @@
+.git
+__pycache__/
+*.lock
+runs/
+logs/
+site/
+dashboard/
+data/events.jsonl*
+data/heartbeat_*.json*
+data/scheduler_state.json*
+data/llm_health.json*
