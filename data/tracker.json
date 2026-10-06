@@ -130,5 +130,572 @@
       "Degree requirement (IT/Management/Economics/Finance) is a reasonable match for a BSc (Hons) in Data Science plus a Higher Diploma in Computing & Software Engineering."
     ],
     "work_arrangement": "remote"
+  },
+  "APP-0003": {
+    "application_id": "APP-0003",
+    "application_method": null,
+    "closing_date": null,
+    "company": "IFS",
+    "company_normalized": "ifs",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-05",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "ifs | senior product portfolio analyst | colombo",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [
+      "Requires experience in product operations, portfolio management, or product roadmapping/governance; candidate background is in operational reporting and CRM/ERP data support.",
+      "Asks for financial scenario modeling and capital allocation tracking; candidate has experience with operational/sales reporting rather than formal portfolio finance."
+    ],
+    "history": [
+      {
+        "at": "2026-10-05T12:39:16+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-05T12:49:38+00:00",
+        "event": "updated: status",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-05T12:51:40+00:00",
+        "event": "updated: status",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-05T13:30:50+00:00",
+        "event": "updated: status",
+        "status": "Applied"
+      },
+      {
+        "at": "2026-10-05T13:32:27+00:00",
+        "event": "no-op update",
+        "status": "Applied"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://jobs.smartrecruiters.com/IFS1/744000144263259-senior-product-portfolio-analyst"
+    ],
+    "last_update": "2026-10-05T13:32:27+00:00",
+    "location": "Colombo, Sri Lanka",
+    "match_score": 79,
+    "next_action": null,
+    "notes": "Role sits within IFS Product & Technology Strategy & Planning organization. Open to UK, Netherlands, Poland, Sweden or Sri Lanka (Hybrid). SmartRecruiters application form.",
+    "recruiter_email": null,
+    "recruiter_email_verified": false,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Adjacent role requiring user approval (Senior Product Portfolio / Business Analyst focus)"
+    ],
+    "resume_version": "general",
+    "role": "Senior Product Portfolio Analyst",
+    "role_normalized": "senior product portfolio analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": "site:jobs.smartrecruiters.com",
+    "status": "Applied",
+    "why_match": [
+      "Asks for data-driven decision enablement and automated workflows; candidate has 2 years of data extraction, transformation and reporting experience and has automated workflows using Power Automate.",
+      "Values practical AI and automation capabilities; candidate completed IBM Python Project for Data Science and HackerRank Python certification, with hands-on data project experience.",
+      "Hybrid role based in Colombo, Sri Lanka, fully matching preferred location and arrangement."
+    ],
+    "work_arrangement": "hybrid"
+  },
+  "APP-0004": {
+    "application_id": "APP-0004",
+    "application_method": null,
+    "closing_date": null,
+    "company": "IGT1",
+    "company_normalized": "igt1",
+    "cover_letter_text": null,
+    "date_applied": "2026-10-05",
+    "date_found": "2026-10-05",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "igt1 | senior business analyst | colombo",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [
+      "Asks for 3+ years of experience specifically in Business Analysis within a software product environment; candidate experience is in reporting and data operations.",
+      "Requires Agile software development lifecycle and requirement-to-backlog definition; candidate does not have formal Agile BA experience on record."
+    ],
+    "history": [
+      {
+        "at": "2026-10-05T12:39:23+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-05T12:49:39+00:00",
+        "event": "updated: status",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-05T12:52:03+00:00",
+        "event": "updated: status",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-05T13:30:50+00:00",
+        "event": "updated: status",
+        "status": "Applied"
+      },
+      {
+        "at": "2026-10-05T13:31:35+00:00",
+        "event": "updated: date_applied",
+        "status": "Applied"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://jobs.smartrecruiters.com/IFS1/744000143071149-senior-business-analyst-ifs-ultimo"
+    ],
+    "last_update": "2026-10-05T13:31:35+00:00",
+    "location": "Port City Colombo, Sri Lanka",
+    "match_score": 78,
+    "next_action": null,
+    "notes": "IGT1 is a sister company of IFS based in Port City Colombo. Hybrid role supporting Ultimo product. SmartRecruiters application form.",
+    "recruiter_email": null,
+    "recruiter_email_verified": false,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Adjacent role requiring user approval (Business Analyst)"
+    ],
+    "resume_version": "general",
+    "role": "Senior Business Analyst (IGT1)",
+    "role_normalized": "senior business analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": "site:jobs.smartrecruiters.com",
+    "status": "Applied",
+    "why_match": [
+      "Asks for analyzing business needs, data collection, and translating data into actionable recommendations; candidate has 2 years of experience extracting CRM/ERP data and preparing reporting for management.",
+      "Requires practical experience using AI tools as part of day-to-day work; candidate has Python data science certifications and analytical project experience.",
+      "Located in Colombo, Sri Lanka under a hybrid model, aligning with preferred work arrangements."
+    ],
+    "work_arrangement": "hybrid"
+  },
+  "APP-0005": {
+    "application_id": "APP-0005",
+    "application_method": null,
+    "closing_date": null,
+    "company": "Sea to Summit",
+    "company_normalized": "sea to summit",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-05",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "sea to summit | sales operations analyst | broomfield",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [],
+    "history": [
+      {
+        "at": "2026-10-05T12:41:48+00:00",
+        "event": "created",
+        "status": "Skipped"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://jobs.smartrecruiters.com/SeaToSummitPtyLtd/744000134393940-sales-operations-analyst"
+    ],
+    "last_update": "2026-10-05T12:41:48+00:00",
+    "location": "Broomfield, Colorado, United States",
+    "match_score": 0,
+    "next_action": null,
+    "notes": "On-site role in Broomfield, Colorado. Excluded by candidate since on-site outside Colombo is not accepted.",
+    "recruiter_email": null,
+    "recruiter_email_verified": false,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [],
+    "resume_version": null,
+    "role": "Sales Operations Analyst",
+    "role_normalized": "sales operations analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": "site:jobs.smartrecruiters.com",
+    "status": "Skipped",
+    "why_match": [],
+    "work_arrangement": "on-site"
+  },
+  "APP-0006": {
+    "application_id": "APP-0006",
+    "application_method": null,
+    "closing_date": null,
+    "company": "Pyramid Consulting",
+    "company_normalized": "pyramid consulting",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-05",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "pyramid consulting | reporting analyst supply chain operations | san bruno",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [],
+    "history": [
+      {
+        "at": "2026-10-05T12:41:48+00:00",
+        "event": "created",
+        "status": "Skipped"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://jobs.smartrecruiters.com/PyramidConsulting1/85673367-reporting-analyst-supply-chain-operations"
+    ],
+    "last_update": "2026-10-05T12:41:48+00:00",
+    "location": "San Bruno, CA",
+    "match_score": 0,
+    "next_action": null,
+    "notes": "Requires shift work and early start hours which the candidate excluded. Also local on-site in CA.",
+    "recruiter_email": null,
+    "recruiter_email_verified": false,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [],
+    "resume_version": null,
+    "role": "Reporting Analyst Supply Chain Operations",
+    "role_normalized": "reporting analyst supply chain operations",
+    "salary": null,
+    "screening_answers": [],
+    "source": "site:jobs.smartrecruiters.com",
+    "status": "Skipped",
+    "why_match": [],
+    "work_arrangement": "on-site"
+  },
+  "APP-0007": {
+    "application_id": "APP-0007",
+    "application_method": null,
+    "closing_date": null,
+    "company": "Voyzant (Pvt) Ltd",
+    "company_normalized": "voyzant",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-06",
+    "date_posted": "2026-09-25",
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "voyzant|data analyst|colombo",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [
+      "Basic SQL experience instead of advanced"
+    ],
+    "history": [
+      {
+        "at": "2026-10-06T09:10:38+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-06T09:10:47+00:00",
+        "event": "updated: status",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:11:42+00:00",
+        "event": "updated: status",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-06T09:13:53+00:00",
+        "event": "no-op update",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-06T09:15:22+00:00",
+        "event": "updated: status",
+        "status": "Skipped"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://www.topjobs.lk/applicant/vacancybyfunctionalarea.jsp?FA=COM"
+    ],
+    "last_update": "2026-10-06T09:15:22+00:00",
+    "location": "Colombo 10",
+    "match_score": 65,
+    "next_action": null,
+    "notes": "Candidate found this listing on topjobs.lk (Job ref 1552856). Role is a fit for Data Analyst. Salary not listed, but likely market competitive.",
+    "recruiter_email": null,
+    "recruiter_email_verified": null,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Salary not stated"
+    ],
+    "resume_version": null,
+    "role": "Data Analyst",
+    "role_normalized": "data analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": null,
+    "status": "Skipped",
+    "why_match": [
+      "Experience with data extraction and transformation.",
+      "Hands-on experience with Excel and Power BI for reporting."
+    ],
+    "work_arrangement": "on-site"
+  },
+  "APP-0008": {
+    "application_id": "APP-0008",
+    "application_method": null,
+    "closing_date": null,
+    "company": "Jobgether (Partner Company)",
+    "company_normalized": "jobgether",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-06, 11:00",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "Full-time",
+    "fingerprint": "jobgether|reporting analyst|remote",
+    "flags": [],
+    "follow_ups_sent": 0,
+    "gaps": [
+      "Candidate does not have 3 years of SQL experience, although he has intermediate Excel and some ERP/CRM experience.",
+      "Candidate's experience level is lower than the requested 5 years."
+    ],
+    "history": [
+      {
+        "at": "2026-10-06T09:30:21+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-06T09:30:42+00:00",
+        "event": "updated: status",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:31:57+00:00",
+        "event": "updated: match_score, work_arrangement",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:32:23+00:00",
+        "event": "approved by candidate (reply 1)",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-06T09:38:40+00:00",
+        "event": "updated: status, notes",
+        "status": "Closed"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://jobs.lever.co/jobgether/935404bc-34d2-4317-8565-10c712c144f3"
+    ],
+    "last_update": "2026-10-06T09:38:40+00:00",
+    "location": "Remote",
+    "match_score": 68,
+    "next_action": null,
+    "notes": "The job listing is no longer available (404 error).",
+    "recruiter_email": null,
+    "recruiter_email_verified": null,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Work authorization or sponsorship unclear",
+      "Role requires more experience than candidate has"
+    ],
+    "resume_version": null,
+    "role": "Reporting Analyst",
+    "role_normalized": "reporting analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": null,
+    "status": "Closed",
+    "why_match": [
+      "Candidate has 2 years experience with advanced Excel reporting and CRM data management.",
+      "Candidate has 1 year experience building Power BI dashboards.",
+      "Candidate has 2 years experience in data extraction and transformation."
+    ],
+    "work_arrangement": "remote"
+  },
+  "APP-0009": {
+    "application_id": "APP-0009",
+    "application_method": "manual",
+    "closing_date": null,
+    "company": "Howden",
+    "company_normalized": "howden",
+    "cover_letter_text": "Dear Hiring Team,\n\nI am applying for the Operations Business Analyst position (Reference: R0019043) at Howden, as advertised on your Workday portal.\n\nI am a reporting and business support professional with two years of experience specializing in data management, reporting, and workflow optimization. In my previous roles, I have focused on ensuring data quality, automating reports, and supporting business workflows within CRM and ERP environments.\n\nAt SHAA Enterprises, I managed end-to-end data extraction and reporting from Ventura CRM. I used advanced Excel functions and Power Automate to standardize and automate reporting workflows, which significantly improved our reporting turnaround times. Additionally, during my time at IFS, I supported enterprise ERP data workflows, conducting critical QA/QC checks to maintain high standards of data governance. I also have practical experience with dashboard design in Power BI to surface business performance trends.\n\nI am particularly drawn to this role at Howden because of your commitment to operational excellence. I am eager to apply my background in managing structured datasets and automating reporting processes to support your operations team during this six-month contract.\n\nI have immediate availability to begin the role and would be delighted to discuss how my technical skills and detail-oriented approach can add value to your team. My resume is attached for your review.\n\nBest regards,\n\nAmeerul Athallah\n+94 76 753 6070\nlinkedin.com/in/ameerul-athallah-a22934161\nameerul.netlify.app",
+    "date_applied": null,
+    "date_found": "2026-10-06, 11:00",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "Contract (6 months)",
+    "fingerprint": "howden|operations business analyst|remote",
+    "flags": [
+      "needs_user_submit"
+    ],
+    "follow_ups_sent": 0,
+    "gaps": [
+      "Candidate has less than 3-6 years of experience in a Business Analyst role."
+    ],
+    "history": [
+      {
+        "at": "2026-10-06T09:30:36+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-06T09:31:06+00:00",
+        "event": "updated: status",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:31:57+00:00",
+        "event": "updated: match_score, work_arrangement",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:32:08+00:00",
+        "event": "approved by candidate (reply 1)",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-06T09:45:03+00:00",
+        "event": "updated: next_action, flags, resume_version, status, application_method, screening_answers, last_update, cover_letter_text",
+        "status": "Application Started"
+      },
+      {
+        "at": "2026-10-06T09:45:26+00:00",
+        "event": "updated: screening_answers, notes, cover_letter_text, next_action, last_update",
+        "status": "Application Started"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://hyperiongrp.wd3.myworkdayjobs.com/en-US/Hyperion_External/job/Operations-Business-Analyst_R0019043"
+    ],
+    "last_update": "2026-10-06T09:45:26+00:00",
+    "location": "Remote",
+    "match_score": 68,
+    "next_action": "Awaiting candidate manual submission on Workday portal",
+    "notes": "Prepared manual submission pack for Workday application as browser automation is disabled. Tailored cover letter and company-specific answers drafted.",
+    "recruiter_email": null,
+    "recruiter_email_verified": null,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Work authorization or sponsorship unclear",
+      "Role requires more experience than candidate has"
+    ],
+    "resume_version": "general",
+    "role": "Operations Business Analyst",
+    "role_normalized": "operations business analyst",
+    "salary": null,
+    "screening_answers": [
+      {
+        "answer": "I am interested in joining Howden because of your strong global reputation in insurance brokering and commitment to operational efficiency. My experience with Excel, CRM systems, and ERP workflows has prepared me to analyze operational processes and deliver reliable reporting. I would love to contribute to Howden's operational goals during this six-month contract.",
+        "question": "Why do you want to work at Howden?",
+        "source": "drafted"
+      },
+      {
+        "answer": "Rs.180,000/month LKR (if required, otherwise leave blank)",
+        "question": "Salary expectations",
+        "source": "standard_answers"
+      },
+      {
+        "answer": "Immediate",
+        "question": "Notice period",
+        "source": "standard_answers"
+      }
+    ],
+    "source": null,
+    "status": "Application Started",
+    "why_match": [
+      "Candidate has experience in business requirement documentation, reporting, and supporting operations.",
+      "Candidate has experience in CRM and ERP data workflows."
+    ],
+    "work_arrangement": "remote"
+  },
+  "APP-0010": {
+    "application_id": "APP-0010",
+    "application_method": null,
+    "closing_date": null,
+    "company": "Jolera Inc",
+    "company_normalized": "jolera inc",
+    "cover_letter_text": null,
+    "date_applied": null,
+    "date_found": "2026-10-06",
+    "date_posted": null,
+    "emails_sent": [],
+    "employment_type": "full-time",
+    "fingerprint": "jolera inc|pmo analyst|colombo",
+    "flags": [
+      "needs_user_input"
+    ],
+    "follow_ups_sent": 0,
+    "gaps": [],
+    "history": [
+      {
+        "at": "2026-10-06T09:59:09+00:00",
+        "event": "created",
+        "status": "Discovered"
+      },
+      {
+        "at": "2026-10-06T09:59:15+00:00",
+        "event": "updated: status, match_score",
+        "status": "Awaiting Approval"
+      },
+      {
+        "at": "2026-10-06T09:59:29+00:00",
+        "event": "approved by candidate (reply 1)",
+        "status": "Ready to Apply"
+      },
+      {
+        "at": "2026-10-06T10:05:26+00:00",
+        "event": "updated: status, next_action, flags, notes",
+        "status": "Application Started"
+      }
+    ],
+    "interview_date": null,
+    "job_urls": [
+      "https://rooster.jobs/job/439940"
+    ],
+    "last_update": "2026-10-06T10:05:26+00:00",
+    "location": "Colombo, Sri Lanka",
+    "match_score": 83,
+    "next_action": "review requirements and shift preference",
+    "notes": "The job requires 3 years of experience (candidate has 2), and requires working EST hours (candidate prefers no shifts/weekends). Also requires flexibility to work overtime. Flagging for candidate to review before submitting manual pack.",
+    "recruiter_email": null,
+    "recruiter_email_verified": null,
+    "recruiter_name": null,
+    "rejection_reason": null,
+    "requires_approval_reasons": [
+      "Salary not stated",
+      "Adjacent role requiring user approval (PMO Analyst)",
+      "Role requires more experience than candidate has"
+    ],
+    "resume_version": null,
+    "role": "PMO Analyst",
+    "role_normalized": "pmo analyst",
+    "salary": null,
+    "screening_answers": [],
+    "source": null,
+    "status": "Application Started",
+    "why_match": [
+      "Requires data-driven problem solving and analytical mindset; candidate has two years experience in data extraction and transformation.",
+      "Requires strong proficiency in Microsoft Office (Excel); candidate has advanced Excel skills including Pivot Tables, VLOOKUP, and reporting.",
+      "Located in Colombo, aligning with preferred work arrangement."
+    ],
+    "work_arrangement": "hybrid"
   }
 }

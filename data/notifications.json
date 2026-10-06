@@ -16,5 +16,231 @@
     "urgent": false,
     "delivered": true,
     "sent_at": "2026-09-25T13:29:35+00:00"
+  },
+  {
+    "message_id": 18,
+    "application_id": "APP-0003",
+    "template": "approval_request",
+    "variables": [
+      79,
+      "Senior Product Portfolio Analyst",
+      "IFS",
+      "Colombo, Sri Lanka",
+      null,
+      "Asks for data-driven decision enablement and automated workflows; candidate has 2 years of data extraction, transformation and reporting experience and has automated workflows using Power Automate.; Values practical AI and automation capabilities; candidate completed IBM Python Project for Data Science and HackerRank Python certification, with hands-on data project experience.; Hybrid role based in Colombo, Sri Lanka, fully matching preferred location and arrangement.",
+      "Requires experience in product operations, portfolio management, or product roadmapping/governance; candidate background is in operational reporting and CRM/ERP data support.; Asks for financial scenario modeling and capital allocation tracking; candidate has experience with operational/sales reporting rather than formal portfolio finance.",
+      "APP-0003"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T12:49:39+00:00"
+  },
+  {
+    "message_id": 19,
+    "application_id": "APP-0004",
+    "template": "approval_request",
+    "variables": [
+      78,
+      "Senior Business Analyst (IGT1)",
+      "IGT1",
+      "Port City Colombo, Sri Lanka",
+      null,
+      "Asks for analyzing business needs, data collection, and translating data into actionable recommendations; candidate has 2 years of experience extracting CRM/ERP data and preparing reporting for management.; Requires practical experience using AI tools as part of day-to-day work; candidate has Python data science certifications and analytical project experience.; Located in Colombo, Sri Lanka under a hybrid model, aligning with preferred work arrangements.",
+      "Asks for 3+ years of experience specifically in Business Analysis within a software product environment; candidate experience is in reporting and data operations.; Requires Agile software development lifecycle and requirement-to-backlog definition; candidate does not have formal Agile BA experience on record.",
+      "APP-0004"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T12:49:40+00:00"
+  },
+  {
+    "message_id": 24,
+    "application_id": "APP-0003",
+    "template": "manual_submit",
+    "variables": [
+      "Senior Product Portfolio Analyst",
+      "IFS",
+      "https://jobs.smartrecruiters.com/IFS1/744000144263259-senior-product-portfolio-analyst",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0003.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T12:55:53+00:00"
+  },
+  {
+    "message_id": 25,
+    "application_id": "APP-0004",
+    "template": "manual_submit",
+    "variables": [
+      "Senior Business Analyst (IGT1)",
+      "IGT1",
+      "https://jobs.smartrecruiters.com/IFS1/744000143071149-senior-business-analyst-ifs-ultimo",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0004.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T12:55:54+00:00"
+  },
+  {
+    "message_id": 26,
+    "application_id": "APP-0003",
+    "template": "manual_submit",
+    "variables": [
+      "Senior Product Portfolio Analyst",
+      "IFS",
+      "https://jobs.smartrecruiters.com/IFS1/744000144263259-senior-product-portfolio-analyst",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0003.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T13:28:09+00:00"
+  },
+  {
+    "message_id": 27,
+    "application_id": "APP-0004",
+    "template": "manual_submit",
+    "variables": [
+      "Senior Business Analyst (IGT1)",
+      "IGT1",
+      "https://jobs.smartrecruiters.com/IFS1/744000143071149-senior-business-analyst-ifs-ultimo",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0004.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T13:28:19+00:00"
+  },
+  {
+    "message_id": 28,
+    "application_id": null,
+    "template": "daily_summary",
+    "variables": [
+      "Mon 05 Oct",
+      2,
+      0,
+      0,
+      2,
+      1,
+      0,
+      0,
+      0,
+      "nothing"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-05T13:30:20+00:00"
+  },
+  {
+    "message_id": 37,
+    "application_id": "APP-0007",
+    "template": "approval_request",
+    "variables": [
+      65,
+      "Data Analyst",
+      "Voyzant (Pvt) Ltd",
+      "Colombo 10",
+      null,
+      "Experience with data extraction and transformation.; Hands-on experience with Excel and Power BI for reporting.",
+      "Basic SQL experience instead of advanced",
+      "APP-0007"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:10:49+00:00"
+  },
+  {
+    "message_id": 42,
+    "application_id": "APP-0008",
+    "template": "approval_request",
+    "variables": [
+      68,
+      "Reporting Analyst",
+      "Jobgether (Partner Company)",
+      "Remote",
+      null,
+      "Candidate has 2 years experience with advanced Excel reporting and CRM data management.; Candidate has 1 year experience building Power BI dashboards.; Candidate has 2 years experience in data extraction and transformation.",
+      "Candidate does not have 3 years of SQL experience, although he has intermediate Excel and some ERP/CRM experience.; Candidate's experience level is lower than the requested 5 years.",
+      "APP-0008"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:31:06+00:00"
+  },
+  {
+    "message_id": 43,
+    "application_id": "APP-0009",
+    "template": "approval_request",
+    "variables": [
+      68,
+      "Operations Business Analyst",
+      "Howden",
+      "Remote",
+      null,
+      "Candidate has experience in business requirement documentation, reporting, and supporting operations.; Candidate has experience in CRM and ERP data workflows.",
+      "Candidate has less than 3-6 years of experience in a Business Analyst role.",
+      "APP-0009"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:31:39+00:00"
+  },
+  {
+    "message_id": 48,
+    "application_id": "APP-0009",
+    "template": "manual_submit",
+    "variables": [
+      "Operations Business Analyst",
+      "Howden",
+      "https://hyperiongrp.wd3.myworkdayjobs.com/en-US/Hyperion_External/job/Operations-Business-Analyst_R0019043",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0009.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:38:09+00:00"
+  },
+  {
+    "message_id": 51,
+    "application_id": "APP-0009",
+    "template": "manual_submit",
+    "variables": [
+      "Operations Business Analyst",
+      "Howden",
+      "https://hyperiongrp.wd3.myworkdayjobs.com/en-US/Hyperion_External/job/Operations-Business-Analyst_R0019043",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0009.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:45:15+00:00"
+  },
+  {
+    "message_id": 52,
+    "application_id": "APP-0009",
+    "template": "manual_submit",
+    "variables": [
+      "Operations Business Analyst",
+      "Howden",
+      "https://hyperiongrp.wd3.myworkdayjobs.com/en-US/Hyperion_External/job/Operations-Business-Analyst_R0019043",
+      "C:\\Users\\athal\\Documents\\Captura\\Findjobs\\data\\manual_packs\\APP-0009.md"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:45:44+00:00"
+  },
+  {
+    "message_id": 53,
+    "application_id": "APP-0010",
+    "template": "approval_request",
+    "variables": [
+      83,
+      "PMO Analyst",
+      "Jolera Inc",
+      "Colombo, Sri Lanka",
+      null,
+      "Requires data-driven problem solving and analytical mindset; candidate has two years experience in data extraction and transformation.; Requires strong proficiency in Microsoft Office (Excel); candidate has advanced Excel skills including Pivot Tables, VLOOKUP, and reporting.; Located in Colombo, aligning with preferred work arrangement.",
+      "",
+      "APP-0010"
+    ],
+    "urgent": false,
+    "delivered": true,
+    "sent_at": "2026-10-06T09:59:16+00:00"
   }
 ]
