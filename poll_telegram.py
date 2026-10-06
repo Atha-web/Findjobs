@@ -204,6 +204,48 @@ def _handle_discard_command(text: str, chat_id: str, message_id: int, config: di
     return True
 
 
+def _handle_approval_reply(text: str, quoted_application_id: str | None,
+                           quoted_notification_type: str | None, chat_id: str,
+                           message_id: int, config: dict) -> bool:
+    """
+    "1" approves and "2" skips a job that is Awaiting Approval, in code, so the decision never
+    depends on a model reading the reply correctly. The job is the quoted approval_request, or
+    the only one waiting. Anything else (including "3") is left to Agent 3. Returns True if handled.
+    """
+    choice = text.strip()
+    if choice not in ("1", "2"):
+        return False
+
+    if quoted_application_id and quoted_notification_type == "approval_request":
+        app_id = quoted_application_id
+    else:
+        waiting = tracker.tracker_search({"status": "Awaiting Approval"})
+        if len(waiting) != 1:
+            return False  # nothing waiting, or several: let Agent 3 ask which one
+        app_id = waiting[0]["application_id"]
+
+    try:
+        record = tracker.tracker_get(app_id)
+        label = f"{record.get('role')}, {record.get('company')}"
+        if record.get("status") != "Awaiting Approval":
+            notifier.reply(chat_id, f"{label} is already {record.get('status')}, so I changed nothing.",
+                           reply_to_message_id=message_id)
+            return True
+        if choice == "1":
+            tracker.tracker_upsert({"application_id": app_id, "status": "Ready to Apply",
+                                    "history_note": "approved by candidate (reply 1)"}, config=config)
+            reply = f"Approved ✅\n{label}\nStatus: Ready to Apply"
+        else:
+            tracker.tracker_upsert({"application_id": app_id, "status": "Skipped",
+                                    "history_note": "skipped by candidate (reply 2)"}, config=config)
+            reply = f"Skipped ⏭️\n{label}\nStatus: Skipped"
+    except tracker.TrackerError as exc:
+        reply = f"Could not update {app_id}: {exc}"
+    notifier.reply(chat_id, reply, reply_to_message_id=message_id)
+    events.emit("poller", "message_out", f"Replied to you ({len(reply)} chars)", application_id=app_id)
+    return True
+
+
 def _handle_message(update: dict, config: dict) -> dict:
     message = update["message"]
     chat_id = str(message["chat"]["id"])
@@ -231,6 +273,10 @@ def _handle_message(update: dict, config: dict) -> dict:
             quoted_notification_type = entry.get("template")
 
     print(f"  <- {text!r} (reply_to={quoted_application_id})")
+
+    if _handle_approval_reply(text, quoted_application_id, quoted_notification_type,
+                              chat_id, message_id, config):
+        return config
 
     parsed = run_agent3.run(
         "message",
