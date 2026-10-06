@@ -227,7 +227,12 @@ def manual_submit_variables(parsed: dict) -> list:
         fh.write(f"# {record.get('role')} at {record.get('company')}\n\nApply: {apply_url}\n\n")
         fh.write("## Cover letter\n\n" + (parsed.get("cover_letter_text") or "-") + "\n\n")
         fh.write("## Pack\n\n```json\n" + json.dumps(pack, indent=2) + "\n```\n")
-    return [record.get("role"), record.get("company"), apply_url, pack_path]
+    # The message carries the cover letter itself (Telegram allows 4096 characters), because on a
+    # remote host the pack file isn't somewhere you can open.
+    letter = (parsed.get("cover_letter_text") or "").strip()
+    if len(letter) > 2800:
+        letter = letter[:2800].rstrip() + "..."
+    return [record.get("role"), record.get("company"), apply_url, f"\n\n{letter}" if letter else pack_path]
 
 
 if __name__ == "__main__":
