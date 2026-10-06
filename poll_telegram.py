@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import time
 
@@ -204,6 +205,18 @@ def _handle_discard_command(text: str, chat_id: str, message_id: int, config: di
     return True
 
 
+def _start_apply_queue() -> None:
+    """Direct handoff to Agent 2: start the apply queue now for anything Ready to Apply, without
+    waiting for the scheduler's timer. Runs in the background; the queue's own lock keeps it to
+    one run at a time."""
+    if not tracker.tracker_search({"status": "Ready to Apply"}):
+        return
+    here = os.path.dirname(os.path.abspath(__file__))
+    subprocess.Popen([sys.executable, "scheduler.py", "--run", "apply_queue"], cwd=here,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print("  -> started the apply queue")
+
+
 def _handle_approval_reply(text: str, quoted_application_id: str | None,
                            quoted_notification_type: str | None, chat_id: str,
                            message_id: int, config: dict) -> bool:
@@ -243,6 +256,7 @@ def _handle_approval_reply(text: str, quoted_application_id: str | None,
         reply = f"Could not update {app_id}: {exc}"
     notifier.reply(chat_id, reply, reply_to_message_id=message_id)
     events.emit("poller", "message_out", f"Replied to you ({len(reply)} chars)", application_id=app_id)
+    _start_apply_queue()
     return True
 
 
@@ -296,6 +310,8 @@ def _handle_message(update: dict, config: dict) -> dict:
     settings_change = parsed.get("settings_change")
     if settings_change:
         config = _apply_settings_change(config, settings_change, chat_id)
+
+    _start_apply_queue()  # Agent 3 may have just moved something to Ready to Apply
 
     handoff = parsed.get("handoff")
     if handoff and handoff.get("to"):

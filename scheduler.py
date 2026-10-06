@@ -138,10 +138,20 @@ def job_daily_search(config: dict) -> str:
     ok, tail = run_script(["run_agent1.py"])
     if not ok:
         raise RuntimeError(f"Agent 1 failed: {tail}")
-    return "Agent 1 finished"
+    # Direct handoff: whatever is Ready to Apply (approved by you, or auto-approved) goes to Agent 2 now.
+    return f"Agent 1 finished; apply queue: {job_apply_queue(config)}"
 
 
 def job_apply_queue(config: dict) -> str:
+    """One run at a time: the timer, a finished search and an approval reply can all start it."""
+    try:
+        with filelock.locked("apply_queue"):
+            return _run_apply_queue(config)
+    except TimeoutError:
+        return "already running"
+
+
+def _run_apply_queue(config: dict) -> str:
     state = _load_state()
     attempts = state.setdefault("apply_attempts", {})
     queue = sorted(tracker.tracker_search({"status": "Ready to Apply"}),
