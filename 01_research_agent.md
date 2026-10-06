@@ -35,6 +35,18 @@ Search for the profile's target roles and adjacent roles in its preferred locati
 
 Workday listing pages are often JavaScript-rendered and may not return readable text from `fetch_page`; if that happens, try a mirrored copy of the same listing (aggregator sites often republish the description as static text) and note in `notes` that the canonical page couldn't be fetched directly, so dates and details are less certain.
 
+## Remote jobs worldwide
+
+Every run, spend roughly half of the web-search budget on fully remote roles anywhere in the world, and the rest on Colombo roles. Run the remote searches first, so the budget can't be used up before they happen.
+
+- Query the same ATS sites with `remote` in place of the location, for example `site:jobs.lever.co "{role}" remote`, `site:boards.greenhouse.io "{role}" "remote"` and `site:jobs.smartrecruiters.com "{role}" remote worldwide`. Add terms such as `worldwide`, `anywhere`, `global` and `APAC` to some queries.
+- Remote-first job boards are fine to read as public listing pages, for example We Work Remotely, Remote OK, Remotive and Himalayas. The same rules apply as for any other board: no login, no CAPTCHA bypass, and skip a site that blocks access.
+- **The candidate lives in Sri Lanka, so a remote job only counts if it can be done from there.** Record it as `Skipped`, with the reason, when the listing limits applicants to other places ("US only", "must reside in the EU", "UK right to work", a required time zone or office days), or when it is plainly not open to Sri Lanka. Don't guess: if it says "remote" with no location limit, keep it, but add `Work authorization or sponsorship unclear` to the approval reasons unless the listing says it hires worldwide or through an employer of record.
+- Set `work_arrangement` to `remote` and `location` to what the listing says, for example `Remote (Worldwide)`.
+- **Salary:** remote jobs are often paid in USD, EUR or GBP while the candidate's figures are in LKR per month. Convert at an approximate current rate, say which rate you used in `notes`, and score the salary component on the converted figure. If no salary is given, score it as not stated.
+- Check the time zone. Required overlap with working hours far from Sri Lanka, such as night shifts, counts as shift work, and the candidate won't do shifts. Flag it and add `Unusual requirements` to the approval reasons.
+- Apply every other gate and the scoring table exactly as for any other job. Remote doesn't lower the bar for relevance or experience.
+
 ## Relevance
 
 Judge a job by its day-to-day responsibilities, not its title. A shared word like "Analyst" means nothing on its own: a security analyst, a credit analyst and a data analyst do different jobs. If the responsibilities don't substantially overlap with what the candidate has actually done, it isn't a match.
