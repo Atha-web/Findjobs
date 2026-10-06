@@ -165,7 +165,9 @@ def notify_discovered_jobs(jobs: list[dict], config: dict) -> None:
             continue
 
         try:
-            tracker.tracker_upsert({"application_id": app_id, "status": "Awaiting Approval"}, config=config)
+            # The model sometimes leaves these out of its own tracker_upsert, so fill them from its output.
+            backfill = {k: v for k, v in (("match_score", score), ("work_arrangement", job.get("work_arrangement"))) if v}
+            tracker.tracker_upsert({"application_id": app_id, "status": "Awaiting Approval", **backfill}, config=config)
         except tracker.TrackerError as exc:
             print(f"{app_id}: could not move to Awaiting Approval: {exc}")
             continue
